@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
-	"github.com/getlantern/systray/example/icon"
 	"github.com/go-clip/clip"
+	"github.com/go-clip/icon"
 )
 
 var (
@@ -26,8 +26,8 @@ func main() {
 
 func onReady() {
 	systray.SetTemplateIcon(icon.Data, icon.Data)
-	systray.SetTitle("Awesome App")
-	systray.SetTooltip("Lantern")
+	// systray.SetTitle("Awesome App")
+	systray.SetTooltip("Clipboard")
 	mQuitOrig := systray.AddMenuItem("Quit", "Quit the whole app")
 	go func() {
 		<-mQuitOrig.ClickedCh
@@ -38,9 +38,9 @@ func onReady() {
 
 	// We can manipulate the systray in other goroutines
 	go func() {
-		systray.SetTemplateIcon(icon.Data, icon.Data)
-		systray.SetTitle("Awesome App")
-		systray.SetTooltip("Pretty awesome棒棒嗒")
+		// systray.SetTemplateIcon(icon.Data, icon.Data)
+		// systray.SetTitle("Awesome App")
+		// systray.SetTooltip("Pretty awesome棒棒嗒")
 
 		// mChange := systray.AddMenuItem("Change Me", "Change Me")
 		// mChecked := systray.AddMenuItemCheckbox("Unchecked", "Check Me", true)
