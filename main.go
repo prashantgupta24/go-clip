@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"strings"
@@ -27,29 +28,40 @@ type tappableButtonstruct struct {
 	id     int
 }
 
+type tappableButton1struct struct {
+	widget.Button
+	tapped bool
+	id     int
+}
+
 // func (b *tappableButtonstruct) CreateRenderer() fyne.WidgetRenderer {
 // 	return widget.NewButton().CreateRenderer()
 // }
 
-func (b *tappableButtonstruct) Tapped(*fyne.PointEvent) {
-	fmt.Println("here")
-	clip.WriteAll(btnTextMap[b.id])
-	b.tapped = true
-	defer func() { // TODO move to a real animation
-		time.Sleep(time.Millisecond * 500)
-		b.tapped = false
-		b.Refresh()
-	}()
-	b.Refresh()
-
-	// if b.OnTapped != nil && !b.Disabled() {
-	// 	b.OnTapped()
-	// }
+type pinkEntryRenderer struct {
+	fyne.WidgetRenderer
 }
 
-// func (t tappableButtonstruct) CreateRenderer() *widget.Button {
+func (p *pinkEntryRenderer) BackgroundColor() color.Color {
+	return color.RGBA{255, 20, 147, 255}
+}
 
-// }
+func (b *tappableButton1struct) CreateRenderer() fyne.WidgetRenderer {
+	r := b.Button.CreateRenderer()
+	return &pinkEntryRenderer{r}
+}
+
+func (b *tappableButtonstruct) Tapped(e *fyne.PointEvent) {
+	fmt.Println("clicked ...")
+	if valToWrite, exists := btnTextMap[b.id]; exists {
+		clip.WriteAll(valToWrite)
+	}
+	b.Disable()
+	defer func() {
+		time.Sleep(time.Millisecond * 30)
+		b.Enable()
+	}()
+}
 
 func newButton(id int) *tappableButtonstruct {
 	b := &tappableButtonstruct{
