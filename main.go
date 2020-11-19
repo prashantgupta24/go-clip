@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"fyne.io/fyne"
@@ -52,24 +53,29 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Hello")
 
-	hello := widget.NewLabel("Hello Fyne!")
+	hello := widget.NewLabel("Clipboard")
 
 	box := widget.NewVBox(
 		hello,
 	)
-	b1n := newButton()
-	b1n.SetText("hello")
+
+	var btnArray []*tappableButtonstruct
+	btnMap := make(map[string]int)
+	// b1n := newButton()
+	// b1n.SetText("hello")
 
 	// b1 := widget.NewButton("Hello", func() {
 	// 	fmt.Println("clicked...")
 	// 	// clip.WriteAll()
 	// })
 
-	// for i := 0; i < 10; i++ {
-	// 	// b1.Text = "asdf"
-	// 	box.Append(b1)
-	// }
-	box.Append(b1n)
+	for i := 0; i < 10; i++ {
+		// b1.Text = "asdf"
+		b1n := newButton()
+		box.Append(b1n)
+		btnArray = append(btnArray, b1n)
+	}
+	// box.Append(b1n)
 	w.SetContent(box)
 
 	changes := make(chan string, 10)
@@ -78,7 +84,7 @@ func main() {
 	go clip.Monitor(time.Second, stopCh, changes)
 
 	// Watch for changes
-	go func(b1 *tappableButtonstruct) {
+	go func() {
 		for {
 			select {
 			case <-stopCh:
@@ -87,15 +93,30 @@ func main() {
 				change, ok := <-changes
 				if ok {
 					log.Printf("change received: '%s'", change)
-					b1.Text = change
-					b1.Refresh()
+					// b1.Text = change
+					// b1.Refresh()
+					val := strings.TrimSpace(change)
+					if _, exists := btnMap[val]; !exists {
+						for index, elem := range btnArray {
+							if elem.Text == "" {
+								elem.Text = val
+								elem.Refresh()
+								btnMap[val] = index
+								break
+							}
+						}
+					}
+
+					// btnArray[0].Text = change
+					// btnArray[0].Refresh()
+
 				} else {
 					log.Printf("channel has been closed. exiting..")
 				}
 
 			}
 		}
-	}(b1n)
+	}()
 
 	w.ShowAndRun()
 
