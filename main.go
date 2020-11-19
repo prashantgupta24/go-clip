@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"image/color"
 	"log"
 	"strconv"
 	"strings"
@@ -22,37 +20,14 @@ func init() {
 	btnTextMap = make(map[int]string)
 }
 
-type tappableButtonstruct struct {
+type customButton struct {
 	widget.Button
 	tapped bool
 	id     int
 }
 
-type tappableButton1struct struct {
-	widget.Button
-	tapped bool
-	id     int
-}
-
-// func (b *tappableButtonstruct) CreateRenderer() fyne.WidgetRenderer {
-// 	return widget.NewButton().CreateRenderer()
-// }
-
-type pinkEntryRenderer struct {
-	fyne.WidgetRenderer
-}
-
-func (p *pinkEntryRenderer) BackgroundColor() color.Color {
-	return color.RGBA{255, 20, 147, 255}
-}
-
-func (b *tappableButton1struct) CreateRenderer() fyne.WidgetRenderer {
-	r := b.Button.CreateRenderer()
-	return &pinkEntryRenderer{r}
-}
-
-func (b *tappableButtonstruct) Tapped(e *fyne.PointEvent) {
-	fmt.Println("clicked ...")
+func (b *customButton) Tapped(e *fyne.PointEvent) {
+	// fmt.Println("clicked ...")
 	if valToWrite, exists := btnTextMap[b.id]; exists {
 		clip.WriteAll(valToWrite)
 	}
@@ -63,8 +38,8 @@ func (b *tappableButtonstruct) Tapped(e *fyne.PointEvent) {
 	}()
 }
 
-func newButton(id int) *tappableButtonstruct {
-	b := &tappableButtonstruct{
+func newButton(id int) *customButton {
+	b := &customButton{
 		id: id,
 	}
 	b.ExtendBaseWidget(b)
@@ -77,34 +52,26 @@ func main() {
 	w := a.NewWindow("Clipboard")
 	w.Resize(fyne.Size{
 		Width: 400,
-		// Height: 100,
 	})
 	w.SetFixedSize(true)
 
-	// hello := widget.NewLabel("Clipboard")
+	var btnArray []*customButton
 
-	box := widget.NewVBox(
-	// hello,
-	)
-
-	var btnArray []*tappableButtonstruct
-	btnMap := make(map[string]int)
-	// b1n := newButton()
-	// b1n.SetText("hello")
-
-	// b1 := widget.NewButton("Hello", func() {
-	// 	fmt.Println("clicked...")
-	// 	// clip.WriteAll()
-	// })
-
+	box := widget.NewVBox()
 	for i := 0; i < 10; i++ {
-		// b1.Text = "asdf"
-		b1n := newButton(i)
-		box.Append(b1n)
-		btnArray = append(btnArray, b1n)
+		button := newButton(i)
+		box.Append(button)
+		btnArray = append(btnArray, button)
 	}
-	// box.Append(b1n)
 	w.SetContent(box)
+	monitorClipboard(btnArray)
+	w.ShowAndRun()
+
+}
+
+func monitorClipboard(btnArray []*customButton) {
+
+	btnMap := make(map[string]int)
 
 	changes := make(chan string, 10)
 	stopCh := make(chan struct{})
@@ -120,9 +87,7 @@ func main() {
 			default:
 				change, ok := <-changes
 				if ok {
-					log.Printf("change received: '%s'", change)
-					// b1.Text = change
-					// b1.Refresh()
+					// log.Printf("change received: '%s'", change)
 					val := strings.TrimSpace(change)
 					if _, exists := btnMap[val]; !exists {
 						for index, elem := range btnArray {
@@ -138,46 +103,10 @@ func main() {
 							}
 						}
 					}
-
-					// btnArray[0].Text = change
-					// btnArray[0].Refresh()
-
 				} else {
 					log.Printf("channel has been closed. exiting..")
 				}
-
 			}
 		}
 	}()
-
-	w.ShowAndRun()
-
 }
-
-// package main
-
-// import (
-// 	"image/color"
-
-// 	"fyne.io/fyne"
-// 	"fyne.io/fyne/app"
-// 	"fyne.io/fyne/canvas"
-// 	"fyne.io/fyne/layout"
-// )
-
-// func main() {
-// 	myApp := app.New()
-// 	myWindow := myApp.NewWindow("Box Layout")
-
-// 	text1 := canvas.NewText("Hello", color.White)
-// 	text2 := canvas.NewText("There", color.White)
-// 	text3 := canvas.NewText("(right)", color.White)
-// 	container := fyne.NewContainerWithLayout(layout.NewHBoxLayout(),
-// 		text1, text2, layout.NewSpacer(), text3)
-
-// 	text4 := canvas.NewText("centered", color.White)
-// 	centered := fyne.NewContainerWithLayout(layout.NewHBoxLayout(),
-// 		layout.NewSpacer(), text4, layout.NewSpacer())
-// 	myWindow.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(), container, centered))
-// 	myWindow.ShowAndRun()
-// }
