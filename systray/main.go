@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,6 +11,14 @@ import (
 	"github.com/getlantern/systray/example/icon"
 	"github.com/go-clip/clip"
 )
+
+var (
+	btnTextMap map[*systray.MenuItem]string
+)
+
+func init() {
+	btnTextMap = make(map[*systray.MenuItem]string)
+}
 
 func main() {
 	systray.Run(onReady, func() {})
@@ -33,8 +42,6 @@ func onReady() {
 		systray.SetTitle("Awesome App")
 		systray.SetTooltip("Pretty awesome棒棒嗒")
 
-		monitorClipboard()
-
 		// mChange := systray.AddMenuItem("Change Me", "Change Me")
 		// mChecked := systray.AddMenuItemCheckbox("Unchecked", "Check Me", true)
 		// mEnabled := systray.AddMenuItem("Enabled", "Enabled")
@@ -54,7 +61,30 @@ func onReady() {
 		// // Sets the icon of a menu item. Only available on Mac.
 		// mQuit.SetIcon(icon.Data)
 
-		systray.AddSeparator()
+		// systray.AddSeparator()
+		var menuItemArray []*systray.MenuItem
+		for i := 0; i < 10; i++ {
+			systray.AddSeparator()
+			menuItem := systray.AddMenuItem("", "")
+			menuItemArray = append(menuItemArray, menuItem)
+			go func() {
+				for {
+					select {
+					case <-menuItem.ClickedCh:
+						// a := menuItem.String()
+						// fmt.Println("a : ", menuItem)
+						if valToWrite, exists := btnTextMap[menuItem]; exists {
+							clip.WriteAll(valToWrite)
+						}
+						// menuItem.SetTitle("I've Changed")
+					}
+				}
+
+			}()
+		}
+
+		monitorClipboard(menuItemArray)
+
 		// mToggle := systray.AddMenuItem("Toggle", "Toggle the Quit button")
 		// shown := true
 		// toggle := func() {
@@ -105,9 +135,9 @@ func onReady() {
 	}()
 }
 
-func monitorClipboard() {
+func monitorClipboard(menuItemArray []*systray.MenuItem) {
 
-	// btnMap := make(map[string]int)
+	btnMap := make(map[string]bool)
 
 	changes := make(chan string, 10)
 	stopCh := make(chan struct{})
@@ -125,24 +155,23 @@ func monitorClipboard() {
 				if ok {
 					// log.Printf("change received: '%s'", change)
 					val := strings.TrimSpace(change)
-					fmt.Println("val : ", val)
-					systray.AddSeparator()
-					systray.AddMenuItem(val, val)
+					// fmt.Println("val : ", val)
 
-					// if _, exists := btnMap[val]; !exists {
-					// 	for index, elem := range btnArray {
-					// 		if elem.Text == "" {
-					// 			btnMap[val] = index
-					// 			btnTextMap[elem.id] = val
-					// 			if len(val) > 20 {
-					// 				val = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
-					// 			}
-					// 			elem.Text = val
-					// 			elem.Refresh()
-					// 			break
-					// 		}
-					// 	}
-					// }
+					if _, exists := btnMap[val]; !exists {
+
+						for _, menuItem := range menuItemArray {
+							if btnTextMap[menuItem] == "" {
+								btnMap[val] = true
+								valTrunc := val
+								if len(val) > 20 {
+									valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
+								}
+								menuItem.SetTitle(valTrunc)
+								btnTextMap[menuItem] = val
+								break
+							}
+						}
+					}
 				} else {
 					log.Printf("channel has been closed. exiting..")
 				}
