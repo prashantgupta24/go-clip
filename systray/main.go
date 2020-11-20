@@ -15,6 +15,7 @@ import (
 type clipboard struct {
 	menuItemArray []*systray.MenuItem
 	menuItemToVal map[*systray.MenuItem]string
+	valExistsMap  map[string]bool
 	numSlots      int
 }
 
@@ -24,6 +25,7 @@ func init() {
 	clipboardInstance = &clipboard{
 		menuItemToVal: make(map[*systray.MenuItem]string),
 		numSlots:      20,
+		valExistsMap:  make(map[string]bool),
 	}
 }
 
@@ -53,7 +55,7 @@ func onReady() {
 
 		addSlots(clipboardInstance.numSlots, clipboardInstance)
 		changeSlotNum(10, clipboardInstance)
-		monitorClipboard(clipboardInstance.menuItemArray)
+		monitorClipboard(clipboardInstance)
 
 		// mToggle := systray.AddMenuItem("Toggle", "Toggle the Quit button")
 		// shown := true
@@ -105,35 +107,19 @@ func changeSlotNum(changeSlotNumTo int, clipboardInstance *clipboard) {
 		return
 	}
 	if changeSlotNumTo > existingSlots { //enable
-		fmt.Println("existing : ", existingSlots)
-		fmt.Println("numSlots : ", changeSlotNumTo)
-		// slotsToEnable := changeSlotNumTo - existingSlots
-		// for index, menuItem := range clipboardInstance.menuItemArray {
-		// 	// menuItem.SetTitle("")
-		// 	if index >= existingSlots-slotsToEnable {
-		// 		menuItem.Enable()
-		// 		menuItem.Show()
-		// 	}
-		// }
 		for i := existingSlots; i < changeSlotNumTo; i++ {
 			menuItem := clipboardInstance.menuItemArray[i]
 			menuItem.Enable()
 			menuItem.Show()
 		}
 	} else { //disable
-		fmt.Println("existing : ", existingSlots)
-		fmt.Println("numSlots : ", changeSlotNumTo)
-		// slotsToDisable := existingSlots - changeSlotNumTo
-		// for index, menuItem := range clipboardInstance.menuItemArray {
-		// 	if index >= existingSlots-slotsToDisable {
-		// 		menuItem.Disable()
-		// 		menuItem.Hide()
-		// 	}
-		// }
 		for i := changeSlotNumTo; i < existingSlots; i++ {
 			menuItem := clipboardInstance.menuItemArray[i]
 			menuItem.Disable()
 			menuItem.Hide()
+			menuItem.SetTitle("")
+			delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
+			delete(clipboardInstance.menuItemToVal, menuItem)
 		}
 	}
 	clipboardInstance.numSlots = changeSlotNumTo
@@ -155,17 +141,14 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 			}
 		}()
 	}
-	// return menuItemArray
 }
 
-func monitorClipboard(menuItemArray []*systray.MenuItem) {
-
-	btnMap := make(map[string]bool)
+func monitorClipboard(clipboardInstance *clipboard) {
 
 	changes := make(chan string, 10)
 	stopCh := make(chan struct{})
 
-	go clip.Monitor(time.Second, stopCh, changes)
+	go clip.Monitor(time.Millisecond*500, stopCh, changes)
 
 	// Watch for changes
 	go func() {
@@ -177,20 +160,24 @@ func monitorClipboard(menuItemArray []*systray.MenuItem) {
 				change, ok := <-changes
 				if ok {
 					val := strings.TrimSpace(change)
-					// fmt.Println("val : ", val)
+					fmt.Println("val : ", val)
 
-					if _, exists := btnMap[val]; !exists {
+					if _, exists := clipboardInstance.valExistsMap[val]; !exists {
+						for _, menuItem := range clipboardInstance.menuItemArray {
+							if !menuItem.Disabled() {
+								if clipboardInstance.menuItemToVal[menuItem] == "" {
+									clipboardInstance.valExistsMap[val] = true
+									clipboardInstance.menuItemToVal[menuItem] = val
+									//truncate to fit on app
+									valTrunc := val
+									if len(val) > 20 {
+										valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
+									}
+									menuItem.SetTitle(valTrunc)
+									break
+								} else {
 
-						for _, menuItem := range menuItemArray {
-							if clipboardInstance.menuItemToVal[menuItem] == "" && !menuItem.Disabled() {
-								btnMap[val] = true
-								valTrunc := val
-								if len(val) > 20 {
-									valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
 								}
-								menuItem.SetTitle(valTrunc)
-								clipboardInstance.menuItemToVal[menuItem] = val
-								break
 							}
 						}
 					}
