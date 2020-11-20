@@ -12,12 +12,19 @@ import (
 	"github.com/go-clip/icon"
 )
 
-var (
-	btnTextMap map[*systray.MenuItem]string
-)
+type clipboard struct {
+	menuItemArray []*systray.MenuItem
+	menuItemToVal map[*systray.MenuItem]string
+	numSlots      int
+}
+
+var clipboardInstance *clipboard
 
 func init() {
-	btnTextMap = make(map[*systray.MenuItem]string)
+	clipboardInstance = &clipboard{
+		menuItemToVal: make(map[*systray.MenuItem]string),
+		numSlots:      20,
+	}
 }
 
 func main() {
@@ -26,9 +33,8 @@ func main() {
 
 func onReady() {
 	systray.SetTemplateIcon(icon.Data, icon.Data)
-	// systray.SetTitle("Awesome App")
 	systray.SetTooltip("Clipboard")
-	mQuitOrig := systray.AddMenuItem("Quit", "Quit the whole app")
+	mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
 	go func() {
 		<-mQuitOrig.ClickedCh
 		fmt.Println("Requesting quit")
@@ -38,52 +44,16 @@ func onReady() {
 
 	// We can manipulate the systray in other goroutines
 	go func() {
-		// systray.SetTemplateIcon(icon.Data, icon.Data)
-		// systray.SetTitle("Awesome App")
-		// systray.SetTooltip("Pretty awesome棒棒嗒")
+		configureMenu := systray.AddMenuItem("Configuration", "Configuration")
+		slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
+		slots5 := slotsMenu.AddSubMenuItem("5", "5")
+		slots10 := slotsMenu.AddSubMenuItem("10", "10")
+		slots20 := slotsMenu.AddSubMenuItem("20", "20")
+		clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
 
-		// mChange := systray.AddMenuItem("Change Me", "Change Me")
-		// mChecked := systray.AddMenuItemCheckbox("Unchecked", "Check Me", true)
-		// mEnabled := systray.AddMenuItem("Enabled", "Enabled")
-		// // Sets the icon of a menu item. Only available on Mac.
-		// mEnabled.SetTemplateIcon(icon.Data, icon.Data)
-
-		// systray.AddMenuItem("Ignored", "Ignored")
-
-		subMenuTop := systray.AddMenuItem("SubMenuTop", "SubMenu Test (top)")
-		subMenuMiddle := subMenuTop.AddSubMenuItem("SubMenuMiddle", "SubMenu Test (middle)")
-		subMenuMiddle.AddSubMenuItemCheckbox("SubMenuBottom - Toggle Panic!", "SubMenu Test (bottom) - Hide/Show Panic!", false)
-		subMenuMiddle.AddSubMenuItem("SubMenuBottom - Panic!", "SubMenu Test (bottom)")
-
-		// mUrl := systray.AddMenuItem("Open UI", "my home")
-		// mQuit := systray.AddMenuItem("退出", "Quit the whole app")
-
-		// // Sets the icon of a menu item. Only available on Mac.
-		// mQuit.SetIcon(icon.Data)
-
-		// systray.AddSeparator()
-		var menuItemArray []*systray.MenuItem
-		for i := 0; i < 10; i++ {
-			systray.AddSeparator()
-			menuItem := systray.AddMenuItem("", "")
-			menuItemArray = append(menuItemArray, menuItem)
-			go func() {
-				for {
-					select {
-					case <-menuItem.ClickedCh:
-						// a := menuItem.String()
-						// fmt.Println("a : ", menuItem)
-						if valToWrite, exists := btnTextMap[menuItem]; exists {
-							clip.WriteAll(valToWrite)
-						}
-						// menuItem.SetTitle("I've Changed")
-					}
-				}
-
-			}()
-		}
-
-		monitorClipboard(menuItemArray)
+		addSlots(clipboardInstance.numSlots, clipboardInstance)
+		changeSlotNum(10, clipboardInstance)
+		monitorClipboard(clipboardInstance.menuItemArray)
 
 		// mToggle := systray.AddMenuItem("Toggle", "Toggle the Quit button")
 		// shown := true
@@ -103,36 +73,89 @@ func onReady() {
 		// 	}
 		// }
 
-		// for {
-		// 	select {
-		// 	case <-mChange.ClickedCh:
-		// 		mChange.SetTitle("I've Changed")
-		// 	case <-mChecked.ClickedCh:
-		// 		if mChecked.Checked() {
-		// 			mChecked.Uncheck()
-		// 			mChecked.SetTitle("Unchecked")
-		// 		} else {
-		// 			mChecked.Check()
-		// 			mChecked.SetTitle("Checked")
-		// 		}
-		// 	case <-mEnabled.ClickedCh:
-		// 		mEnabled.SetTitle("Disabled")
-		// 		mEnabled.Disable()
-		// 	case <-mUrl.ClickedCh:
-		// 		open.Run("https://www.getlantern.org")
-		// 	case <-subMenuBottom2.ClickedCh:
-		// 		panic("panic button pressed")
-		// 	case <-subMenuBottom.ClickedCh:
-		// 		toggle()
-		// 	case <-mToggle.ClickedCh:
-		// 		toggle()
-		// 	case <-mQuit.ClickedCh:
-		// 		systray.Quit()
-		// 		fmt.Println("Quit2 now...")
-		// 		return
+		for {
+			select {
+			case <-slots5.ClickedCh:
+				fmt.Println("changed to 5")
+				changeSlotNum(5, clipboardInstance)
+			case <-slots10.ClickedCh:
+				fmt.Println("changed to 10")
+				changeSlotNum(10, clipboardInstance)
+			case <-slots20.ClickedCh:
+				fmt.Println("changed to 20")
+				changeSlotNum(20, clipboardInstance)
+			case <-clearMenu.ClickedCh:
+				fmt.Println("clear")
+				clearSlots(clipboardInstance.menuItemArray)
+			}
+		}
+	}()
+}
+
+func clearSlots(menuItemArray []*systray.MenuItem) {
+	for _, menuItem := range menuItemArray {
+		menuItem.SetTitle("")
+	}
+}
+
+func changeSlotNum(changeSlotNumTo int, clipboardInstance *clipboard) {
+
+	existingSlots := clipboardInstance.numSlots
+	if changeSlotNumTo == existingSlots {
+		return
+	}
+	if changeSlotNumTo > existingSlots { //enable
+		fmt.Println("existing : ", existingSlots)
+		fmt.Println("numSlots : ", changeSlotNumTo)
+		// slotsToEnable := changeSlotNumTo - existingSlots
+		// for index, menuItem := range clipboardInstance.menuItemArray {
+		// 	// menuItem.SetTitle("")
+		// 	if index >= existingSlots-slotsToEnable {
+		// 		menuItem.Enable()
+		// 		menuItem.Show()
 		// 	}
 		// }
-	}()
+		for i := existingSlots; i < changeSlotNumTo; i++ {
+			menuItem := clipboardInstance.menuItemArray[i]
+			menuItem.Enable()
+			menuItem.Show()
+		}
+	} else { //disable
+		fmt.Println("existing : ", existingSlots)
+		fmt.Println("numSlots : ", changeSlotNumTo)
+		// slotsToDisable := existingSlots - changeSlotNumTo
+		// for index, menuItem := range clipboardInstance.menuItemArray {
+		// 	if index >= existingSlots-slotsToDisable {
+		// 		menuItem.Disable()
+		// 		menuItem.Hide()
+		// 	}
+		// }
+		for i := changeSlotNumTo; i < existingSlots; i++ {
+			menuItem := clipboardInstance.menuItemArray[i]
+			menuItem.Disable()
+			menuItem.Hide()
+		}
+	}
+	clipboardInstance.numSlots = changeSlotNumTo
+}
+
+func addSlots(numSlots int, clipboardInstance *clipboard) {
+	for i := 0; i < numSlots; i++ {
+		systray.AddSeparator()
+		menuItem := systray.AddMenuItem("", "")
+		clipboardInstance.menuItemArray = append(clipboardInstance.menuItemArray, menuItem)
+		go func() {
+			for {
+				select {
+				case <-menuItem.ClickedCh:
+					if valToWrite, exists := clipboardInstance.menuItemToVal[menuItem]; exists {
+						clip.WriteAll(valToWrite)
+					}
+				}
+			}
+		}()
+	}
+	// return menuItemArray
 }
 
 func monitorClipboard(menuItemArray []*systray.MenuItem) {
@@ -153,21 +176,20 @@ func monitorClipboard(menuItemArray []*systray.MenuItem) {
 			default:
 				change, ok := <-changes
 				if ok {
-					// log.Printf("change received: '%s'", change)
 					val := strings.TrimSpace(change)
 					// fmt.Println("val : ", val)
 
 					if _, exists := btnMap[val]; !exists {
 
 						for _, menuItem := range menuItemArray {
-							if btnTextMap[menuItem] == "" {
+							if clipboardInstance.menuItemToVal[menuItem] == "" && !menuItem.Disabled() {
 								btnMap[val] = true
 								valTrunc := val
 								if len(val) > 20 {
 									valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
 								}
 								menuItem.SetTitle(valTrunc)
-								btnTextMap[menuItem] = val
+								clipboardInstance.menuItemToVal[menuItem] = val
 								break
 							}
 						}
