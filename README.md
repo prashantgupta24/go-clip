@@ -4,3 +4,4 @@
 
 - Tests
 - Refactor packages
+- Start app
