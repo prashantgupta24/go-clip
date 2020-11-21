@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"log"
@@ -46,7 +46,7 @@ func newButton(id int) *customButton {
 	return b
 }
 
-func main() {
+func Start() {
 
 	a := app.New()
 	w := a.NewWindow("Clipboard")
