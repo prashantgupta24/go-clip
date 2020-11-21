@@ -17,7 +17,6 @@ var clipboardInstance *clipboard
 func initInstance() {
 	clipboardInstance = &clipboard{
 		menuItemToVal: make(map[*systray.MenuItem]string),
-		activeSlots:   20,
 		valExistsMap:  make(map[string]bool),
 	}
 }
@@ -40,36 +39,39 @@ func onReady() {
 	}()
 
 	// We can manipulate the systray in other goroutines
-	go func() {
-		configureMenu := systray.AddMenuItem("Configuration", "Configuration")
-		slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
-		slots5 := slotsMenu.AddSubMenuItem("5", "5")
-		slots10 := slotsMenu.AddSubMenuItem("10", "10")
-		slots20 := slotsMenu.AddSubMenuItem("20", "20")
-		clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
+	configureMenu := systray.AddMenuItem("Configuration", "Configuration")
+	slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
+	slots5 := slotsMenu.AddSubMenuItem("5", "5")
+	slots10 := slotsMenu.AddSubMenuItem("10", "10")
+	slots20 := slotsMenu.AddSubMenuItem("20", "20")
+	clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
 
-		addSlots(clipboardInstance.activeSlots, clipboardInstance)
-		clipboardInstance.nextMenuItemIndex = 0
-		changeActiveSlots(10, clipboardInstance)
-		monitorClipboard(clipboardInstance)
+	addSlots(20, clipboardInstance)
+	clipboardInstance.nextMenuItemIndex = 0
+	changeActiveSlots(10, clipboardInstance)
 
-		for {
-			select {
-			case <-slots5.ClickedCh:
-				fmt.Println("changed to 5")
-				changeActiveSlots(5, clipboardInstance)
-			case <-slots10.ClickedCh:
-				fmt.Println("changed to 10")
-				changeActiveSlots(10, clipboardInstance)
-			case <-slots20.ClickedCh:
-				fmt.Println("changed to 20")
-				changeActiveSlots(20, clipboardInstance)
-			case <-clearMenu.ClickedCh:
-				fmt.Println("clear")
-				clearSlots(clipboardInstance.menuItemArray)
-			}
+	//monitor clipboard
+	changes := make(chan string, 10)
+	stopCh := make(chan struct{})
+	go clip.Monitor(time.Millisecond*500, stopCh, changes)
+	go monitorClipboard(clipboardInstance, stopCh, changes)
+
+	for {
+		select {
+		case <-slots5.ClickedCh:
+			// fmt.Println("changed to 5")
+			changeActiveSlots(5, clipboardInstance)
+		case <-slots10.ClickedCh:
+			// fmt.Println("changed to 10")
+			changeActiveSlots(10, clipboardInstance)
+		case <-slots20.ClickedCh:
+			// fmt.Println("changed to 20")
+			changeActiveSlots(20, clipboardInstance)
+		case <-clearMenu.ClickedCh:
+			// fmt.Println("clear")
+			clearSlots(clipboardInstance.menuItemArray)
 		}
-	}()
+	}
 }
 
 func clearSlots(menuItemArray []*systray.MenuItem) {
@@ -133,58 +135,51 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 			}
 		}()
 	}
+	clipboardInstance.activeSlots = clipboardInstance.activeSlots + numSlots
 }
 
-func monitorClipboard(clipboardInstance *clipboard) {
-
-	changes := make(chan string, 10)
-	stopCh := make(chan struct{})
-
-	go clip.Monitor(time.Millisecond*500, stopCh, changes)
-
+func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, changes chan string) {
 	// Watch for changes
-	go func() {
-		for {
-			select {
-			case <-stopCh:
-				break
-			default:
-				change, ok := <-changes
-				if ok {
-					val := strings.TrimSpace(change)
-					fmt.Println("val : ", val)
+	for {
+		select {
+		case <-stopCh:
+			break
+		default:
+			change, ok := <-changes
+			if ok {
+				val := strings.TrimSpace(change)
+				fmt.Println("val : ", val)
 
-					if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
-						fmt.Println("clipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-						menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
-						// for _, menuItem := range clipboardInstance.menuItemArray {
-						for {
-							if !menuItem.Disabled() {
-								//delete last entry, if exists
-								delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
-								delete(clipboardInstance.menuItemToVal, menuItem)
-								// if clipboardInstance.menuItemToVal[menuItem] == "" {
-								clipboardInstance.valExistsMap[val] = true
-								clipboardInstance.menuItemToVal[menuItem] = val
-								//truncate to fit on app
-								valTrunc := val
-								if len(val) > 20 {
-									valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
-								}
-								menuItem.SetTitle(valTrunc)
-								menuItem.SetTooltip(val)
-								clipboardInstance.nextMenuItemIndex = (clipboardInstance.nextMenuItemIndex + 1) % clipboardInstance.activeSlots
-								break
-							} else {
-								// menuItem = clipboardInstance.menuItemArray[(clipboardInstance.nextMenuItemIndex+1)%(clipboardInstance.activeSlots)]
-								clipboardInstance.nextMenuItemIndex = (clipboardInstance.nextMenuItemIndex + 1) % clipboardInstance.activeSlots
+				if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
+					fmt.Println("clipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+					menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
+					// for _, menuItem := range clipboardInstance.menuItemArray {
+					for {
+						if !menuItem.Disabled() {
+							//delete last entry, if exists
+							delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
+							delete(clipboardInstance.menuItemToVal, menuItem)
+							// if clipboardInstance.menuItemToVal[menuItem] == "" {
+							clipboardInstance.valExistsMap[val] = true
+							clipboardInstance.menuItemToVal[menuItem] = val
+							//truncate to fit on app
+							valTrunc := val
+							if len(val) > 20 {
+								valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
 							}
+							menuItem.SetTitle(valTrunc)
+							menuItem.SetTooltip(val)
+							clipboardInstance.nextMenuItemIndex = (clipboardInstance.nextMenuItemIndex + 1) % clipboardInstance.activeSlots
+							break
+						} else {
+							// menuItem = clipboardInstance.menuItemArray[(clipboardInstance.nextMenuItemIndex+1)%(clipboardInstance.activeSlots)]
+							clipboardInstance.nextMenuItemIndex = (clipboardInstance.nextMenuItemIndex + 1) % clipboardInstance.activeSlots
 						}
 					}
-				} else {
-					log.Printf("channel has been closed. exiting..")
 				}
+			} else {
+				log.Printf("channel has been closed. exiting..")
 			}
 		}
-	}()
+	}
 }
