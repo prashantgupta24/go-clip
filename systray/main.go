@@ -99,6 +99,9 @@ func onReady() {
 func clearSlots(menuItemArray []*systray.MenuItem) {
 	for _, menuItem := range menuItemArray {
 		menuItem.SetTitle("")
+		menuItem.SetTooltip("")
+		delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
+		delete(clipboardInstance.menuItemToVal, menuItem)
 	}
 }
 
@@ -122,6 +125,7 @@ func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
 			menuItem.Disable()
 			menuItem.Hide()
 			menuItem.SetTitle("")
+			menuItem.SetTooltip("")
 			delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
 			delete(clipboardInstance.menuItemToVal, menuItem)
 		}
@@ -167,7 +171,7 @@ func monitorClipboard(clipboardInstance *clipboard) {
 					val := strings.TrimSpace(change)
 					fmt.Println("val : ", val)
 
-					if _, exists := clipboardInstance.valExistsMap[val]; !exists {
+					if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
 						fmt.Println("clipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
 						menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
 						// for _, menuItem := range clipboardInstance.menuItemArray {
@@ -185,6 +189,7 @@ func monitorClipboard(clipboardInstance *clipboard) {
 									valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
 								}
 								menuItem.SetTitle(valTrunc)
+								menuItem.SetTooltip(val)
 								clipboardInstance.nextMenuItemIndex = (clipboardInstance.nextMenuItemIndex + 1) % clipboardInstance.activeSlots
 								break
 							} else {
