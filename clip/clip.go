@@ -1,3 +1,7 @@
+/*
+Borrowwd from https://github.com/atotto/clipboard
+*/
+
 package clip
 
 import (

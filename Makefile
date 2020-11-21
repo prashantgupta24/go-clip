@@ -5,7 +5,7 @@ build: clean
 	mkdir -p -v ./bin/go-clip.app/Contents/MacOS
 	cp ./appInfo/*.plist ./bin/go-clip.app/Contents/Info.plist
 	cp ./appInfo/*.icns ./bin/go-clip.app/Contents/Resources/icon.icns
-	go build -o ./bin/go-clip.app/Contents/MacOS/go-clip systray/main.go
+	go build -o ./bin/go-clip.app/Contents/MacOS/go-clip cmd/main.go
 
 open: build
 	open ./bin
@@ -14,7 +14,7 @@ clean:
 	rm -rf ./bin
 
 start:
-	go run systray/main.go
+	go run cmd/main.go
 
 vet:
 	go vet $(shell glide nv)
