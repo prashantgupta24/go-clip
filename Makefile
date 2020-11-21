@@ -21,3 +21,6 @@ vet:
 
 lint:
 	go list ./... | grep -v vendor | grep -v /assets/ |xargs -L1 golint -set_exit_status
+
+test:
+	go test ./...
