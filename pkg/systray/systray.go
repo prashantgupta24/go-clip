@@ -14,7 +14,7 @@ import (
 
 var clipboardInstance *clipboard
 
-func init() {
+func initInstance() {
 	clipboardInstance = &clipboard{
 		menuItemToVal: make(map[*systray.MenuItem]string),
 		activeSlots:   20,
@@ -24,6 +24,7 @@ func init() {
 
 //Run starts the system tray app
 func Run() {
+	initInstance()
 	systray.Run(onReady, func() {})
 }
 
