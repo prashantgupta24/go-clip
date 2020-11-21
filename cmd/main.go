@@ -59,24 +59,6 @@ func onReady() {
 		changeActiveSlots(10, clipboardInstance)
 		monitorClipboard(clipboardInstance)
 
-		// mToggle := systray.AddMenuItem("Toggle", "Toggle the Quit button")
-		// shown := true
-		// toggle := func() {
-		// 	if shown {
-		// 		subMenuBottom.Check()
-		// 		subMenuBottom2.Hide()
-		// 		mQuitOrig.Hide()
-		// 		mEnabled.Hide()
-		// 		shown = false
-		// 	} else {
-		// 		subMenuBottom.Uncheck()
-		// 		subMenuBottom2.Show()
-		// 		mQuitOrig.Show()
-		// 		mEnabled.Show()
-		// 		shown = true
-		// 	}
-		// }
-
 		for {
 			select {
 			case <-slots5.ClickedCh:
@@ -118,7 +100,12 @@ func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
 			menuItem.Enable()
 			menuItem.Show()
 		}
-		clipboardInstance.nextMenuItemIndex = existingSlots
+		for index, menuItem := range clipboardInstance.menuItemArray {
+			if _, exists := clipboardInstance.menuItemToVal[menuItem]; !exists && !menuItem.Disabled() {
+				clipboardInstance.nextMenuItemIndex = index
+				break
+			}
+		}
 	} else { //disable
 		for i := changeSlotNumTo; i < existingSlots; i++ {
 			menuItem := clipboardInstance.menuItemArray[i]
@@ -129,7 +116,9 @@ func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
 			delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
 			delete(clipboardInstance.menuItemToVal, menuItem)
 		}
-		clipboardInstance.nextMenuItemIndex = 0
+		if clipboardInstance.nextMenuItemIndex >= changeSlotNumTo {
+			clipboardInstance.nextMenuItemIndex = 0
+		}
 	}
 
 }
