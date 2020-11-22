@@ -2,11 +2,14 @@ package systray
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/getlantern/systray"
+	"github.com/go-clip/icon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -83,7 +86,6 @@ func (suite *ClipTestSuite) TestClipboard() {
 		// assert.Len(t, clipboardInstance.valExistsMap, min(i, clipboardInstance.activeSlots))
 		changes <- "hello" + strconv.Itoa(i)
 		time.Sleep(time.Millisecond * 10)
-		// fmt.Println("clipboardInstance.menuItemToVal", clipboardInstance.menuItemToVal)
 		// assert.Len(t, clipboardInstance.menuItemToVal, v1+1)
 		// assert.Len(t, clipboardInstance.valExistsMap, v2+1)
 		assert.Contains(t, clipboardInstance.valExistsMap, "hello"+strconv.Itoa(i))
@@ -128,155 +130,100 @@ func getActiveSlots(clipboard *clipboard) int {
 	return activeSlots
 }
 
-//uncomment for visual testing
-// func TestMain(m *testing.M) {
+// uncomment for visual testing
+func TestMain(m *testing.M) {
 
-// 	systray.Run(func() {
-// 		systray.SetTemplateIcon(icon.Data, icon.Data)
-// 		systray.SetTooltip("Test")
-// 		systray.AddMenuItem("Quit", "Quit the app")
-// 		systray.AddMenuItem("Configuration", "Configuration")
+	// 	systray.Run(func() {
+	// 		systray.SetTemplateIcon(icon.Data, icon.Data)
+	// 		systray.SetTooltip("Test")
+	// 		systray.AddMenuItem("Quit", "Quit the app")
+	// 		systray.AddMenuItem("Configuration", "Configuration")
 
-// 		type test struct {
-// 			menuItemArray []*systray.MenuItem
-// 		}
+	// 		type test struct {
+	// 			menuItemArray []*systray.MenuItem
+	// 		}
 
-// 		testInstance := &test{}
-// 		//add 20 menu items
-// 		for i := 0; i < 20; i++ {
-// 			systray.AddSeparator()
-// 			menuItem := systray.AddMenuItem("", "")
-// 			testInstance.menuItemArray = append(testInstance.menuItemArray, menuItem)
-// 		}
+	// 		testInstance := &test{}
+	// 		//add 20 menu items
+	// 		for i := 0; i < 20; i++ {
+	// 			systray.AddSeparator()
+	// 			menuItem := systray.AddMenuItem("", "")
+	// 			testInstance.menuItemArray = append(testInstance.menuItemArray, menuItem)
+	// 		}
 
-// 		//after 6 seconds, try to hide the last 10 menu items
-// 		time.AfterFunc(time.Second*6, func() {
-// 			for i := 10; i < 20; i++ {
-// 				menuItem := testInstance.menuItemArray[i]
-// 				menuItem.Hide()
-// 			}
-// 		})
-// 	}, func() {})
+	// 		//after 6 seconds, try to hide the last 10 menu items
+	// 		time.AfterFunc(time.Second*6, func() {
+	// 			for i := 10; i < 20; i++ {
+	// 				menuItem := testInstance.menuItemArray[i]
+	// 				menuItem.Hide()
+	// 			}
+	// 		})
+	// 	}, func() {})
 
-// timeToSleep := time.Millisecond * 500 //change accordingly
-// initInstance()
-// systray.Run(func() {
-// 	systray.SetTemplateIcon(icon.Data, icon.Data)
-// 	systray.SetTooltip("Clipboard")
+	timeToSleep := time.Second //change accordingly
+	initInstance()
+	systray.Run(func() {
+		systray.SetTemplateIcon(icon.Data, icon.Data)
+		systray.SetTooltip("Clipboard")
 
-// 	mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
-// 	go func() {
-// 		<-mQuitOrig.ClickedCh
-// 		fmt.Println("Requesting quit")
-// 		systray.Quit()
-// 		fmt.Println("Finished quitting")
-// 	}()
+		mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
+		go func() {
+			<-mQuitOrig.ClickedCh
+			fmt.Println("Requesting quit")
+			systray.Quit()
+			fmt.Println("Finished quitting")
+		}()
 
-// 	// We can manipulate the systray in other goroutines
-// 	configureMenu := systray.AddMenuItem("Configuration", "Configuration")
-// 	slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
-// 	slots5 := slotsMenu.AddSubMenuItem("5", "5")
-// 	slots10 := slotsMenu.AddSubMenuItem("10", "10")
-// 	slots20 := slotsMenu.AddSubMenuItem("20", "20")
-// 	clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
+		// We can manipulate the systray in other goroutines
+		configureMenu := systray.AddMenuItem("Configuration", "Configuration")
+		slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
+		slots5 := slotsMenu.AddSubMenuItem("5", "5")
+		slots10 := slotsMenu.AddSubMenuItem("10", "10")
+		slots20 := slotsMenu.AddSubMenuItem("20", "20")
+		clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
 
-// 	addSlots(10, clipboardInstance)
-// 	// time.Sleep(timeToSleep)
-// 	// changeActiveSlots(10, clipboardInstance)
-// 	time.AfterFunc(time.Second*3, func() {
-// 		addSlots(10, clipboardInstance)
-// 	})
-// 	// time.AfterFunc(time.Second*2, func() {
-// 	// 	// changeActiveSlots(5, clipboardInstance)
-// 	// 	// slots20.ClickedCh <- struct{}{}
-// 	// 	for i := 10; i < 20; i++ {
-// 	// 		menuItem := clipboardInstance.menuItemArray[i]
-// 	// 		menuItem.Show()
-// 	// 		menuItem.Enable()
+		addSlots(20, clipboardInstance)
 
-// 	// 		// time.Sleep(time.Millisecond * 500)
-// 	// 	}
-// 	// })
-// 	time.AfterFunc(time.Second*6, func() {
-// 		// changeActiveSlots(5, clipboardInstance)
-// 		// slots5.ClickedCh <- struct{}{}
-// 		for i := 10; i < 20; i++ {
-// 			menuItem := clipboardInstance.menuItemArray[i]
-// 			// menuItem.Disable()
-// 			menuItem.Hide()
-// 			// time.Sleep(time.Millisecond * 500)
-// 		}
-// 	})
-// 	// time.Sleep(timeToSleep)
-// 	// changeActiveSlots(15, clipboardInstance)
-// 	// assert.Len(t, clipboardInstance.menuItemArray, 30)
+		changes := make(chan string, 10)
+		stopCh := make(chan struct{})
+		go monitorClipboard(clipboardInstance, stopCh, changes)
 
-// 	changes := make(chan string, 10)
-// 	stopCh := make(chan struct{})
-// 	go monitorClipboard(clipboardInstance, stopCh, changes)
+		go func() {
+			for {
+				select {
+				case <-slots5.ClickedCh:
+					// fmt.Println("changed to 5")
+					changeActiveSlots(5, clipboardInstance)
+				case <-slots10.ClickedCh:
+					// fmt.Println("changed to 10")
+					changeActiveSlots(10, clipboardInstance)
+				case <-slots20.ClickedCh:
+					// fmt.Println("changed to 20")
+					changeActiveSlots(20, clipboardInstance)
+				case <-clearMenu.ClickedCh:
+					// fmt.Println("clear")
+					clearSlots(clipboardInstance.menuItemArray)
+				}
+			}
+		}()
 
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-slots5.ClickedCh:
-// 				// fmt.Println("changed to 5")
-// 				changeActiveSlots(5, clipboardInstance)
-// 			case <-slots10.ClickedCh:
-// 				// fmt.Println("changed to 10")
-// 				changeActiveSlots(10, clipboardInstance)
-// 			case <-slots20.ClickedCh:
-// 				// fmt.Println("changed to 20")
-// 				changeActiveSlots(20, clipboardInstance)
-// 			case <-clearMenu.ClickedCh:
-// 				// fmt.Println("clear")
-// 				clearSlots(clipboardInstance.menuItemArray)
-// 			}
-// 		}
-// 	}()
+		for i := 0; i < 100; i++ {
+			// 	// assert.Len(, clipboardInstance.menuItemToVal, i)
+			// 	// assert.Len(t, clipboardInstance.valExistsMap, i)
+			time.Sleep(timeToSleep)
+			changes <- "hello" + strconv.Itoa(i)
 
-// go func() {
-// 	for i := 0; i < 50; i++ {
-// 		time.Sleep(time.Millisecond * 244)
-// 		if i == 9 {
-// 			log.Println("changing")
-// 			// changeActiveSlots(15, clipboardInstance)
-// 			slots5.ClickedCh <- struct{}{}
-// 		}
-// 	}
-// }()
+			if i%5 == 0 && i != 0 {
+				time.Sleep(time.Millisecond * 10)
+				changetTo := rand.Intn(15) + 5
+				log.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+				log.Println("changed to : ", changetTo)
+				changeActiveSlots(changetTo, clipboardInstance)
+				// assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
+				log.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+				// time.Sleep(time.Millisecond * 10)
+			}
+		}
 
-// for i := 0; i < 50; i++ {
-// 	// assert.Len(, clipboardInstance.menuItemToVal, i)
-// 	// assert.Len(t, clipboardInstance.valExistsMap, i)
-// time.Sleep(timeToSleep)
-// changes <- "hello" + strconv.Itoa(i)
-
-// 	// fmt.Println("clipboardInstance.menuItemToVal", clipboardInstance.menuItemToVal)
-// 	// assert.Len(t, clipboardInstance.menuItemToVal, i+1)
-// 	// assert.Len(t, clipboardInstance.valExistsMap, i+1)
-// 	// assert.Contains(t, clipboardInstance.valExistsMap, "hello"+strconv.Itoa(i))
-
-// 	// if i == 13 {
-// 	// 	changeActiveSlots(20, clipboardInstance)
-// 	// 	time.Sleep(timeToSleep)
-// 	// }
-// }
-// changeActiveSlots(5, clipboardInstance)
-// for i := 0; i < 10; i++ {
-// 	// assert.Len(, clipboardInstance.menuItemToVal, i)
-// 	// assert.Len(t, clipboardInstance.valExistsMap, i)
-// 	changes <- "hello" + strconv.Itoa(i)
-// 	time.Sleep(timeToSleep)
-// 	// fmt.Println("clipboardInstance.menuItemToVal", clipboardInstance.menuItemToVal)
-// 	// assert.Len(t, clipboardInstance.menuItemToVal, i+1)
-// 	// assert.Len(t, clipboardInstance.valExistsMap, i+1)
-// 	// assert.Contains(t, clipboardInstance.valExistsMap, "hello"+strconv.Itoa(i))
-
-// 	// if i == 13 {
-// 	// 	changeActiveSlots(20, clipboardInstance)
-// 	// 	time.Sleep(timeToSleep)
-// 	// }
-// }
-
-// }, func() {})
-// }
+	}, func() {})
+}
