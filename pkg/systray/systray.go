@@ -47,7 +47,6 @@ func onReady() {
 	clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
 
 	addSlots(20, clipboardInstance)
-	clipboardInstance.nextMenuItemIndex = 0
 	changeActiveSlots(10, clipboardInstance)
 
 	//monitor clipboard
@@ -151,11 +150,12 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 				fmt.Println("val : ", val)
 
 				if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
-					fmt.Println("clipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+					fmt.Println("Index : ", clipboardInstance.nextMenuItemIndex)
 					menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
 					// for _, menuItem := range clipboardInstance.menuItemArray {
 					for {
 						if !menuItem.Disabled() {
+							fmt.Println("final : ", clipboardInstance.nextMenuItemIndex)
 							//delete last entry, if exists
 							delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
 							delete(clipboardInstance.menuItemToVal, menuItem)
