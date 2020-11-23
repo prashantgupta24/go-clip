@@ -79,6 +79,7 @@ func clearSlots(menuItemArray []*systray.MenuItem) {
 		menuItem.SetTooltip("")
 		delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
 		delete(clipboardInstance.menuItemToVal, menuItem)
+		clipboardInstance.nextMenuItemIndex = 0
 	}
 }
 
