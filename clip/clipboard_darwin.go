@@ -1,13 +1,16 @@
-/*
-Borrowwd from https://github.com/atotto/clipboard
-*/
+// Copyright 2013 @atotto. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// +build darwin
 
 package clip
 
 import (
 	"os/exec"
-	"time"
 )
+
+// type DarwinClip struct{}
 
 var (
 	pasteCmdArgs = "pbpaste"
@@ -48,27 +51,4 @@ func WriteAll(text string) error {
 		return err
 	}
 	return copyCmd.Wait()
-}
-
-func Monitor(interval time.Duration, stopCh <-chan struct{}, changes chan<- string) error {
-	defer close(changes)
-
-	currentValue, err := readAll()
-	if err != nil {
-		return err
-	}
-
-	for {
-		select {
-		case <-stopCh:
-			return nil
-		default:
-			newValue, _ := readAll()
-			if newValue != currentValue {
-				currentValue = newValue
-				changes <- currentValue
-			}
-		}
-		time.Sleep(interval)
-	}
 }

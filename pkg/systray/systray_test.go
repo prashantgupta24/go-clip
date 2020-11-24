@@ -133,33 +133,6 @@ func getActiveSlots(clipboard *clipboard) int {
 // uncomment for visual testing
 func TestMain(m *testing.M) {
 
-	// 	systray.Run(func() {
-	// 		systray.SetTemplateIcon(icon.Data, icon.Data)
-	// 		systray.SetTooltip("Test")
-	// 		systray.AddMenuItem("Quit", "Quit the app")
-	// 		systray.AddMenuItem("Configuration", "Configuration")
-
-	// 		type test struct {
-	// 			menuItemArray []*systray.MenuItem
-	// 		}
-
-	// 		testInstance := &test{}
-	// 		//add 20 menu items
-	// 		for i := 0; i < 20; i++ {
-	// 			systray.AddSeparator()
-	// 			menuItem := systray.AddMenuItem("", "")
-	// 			testInstance.menuItemArray = append(testInstance.menuItemArray, menuItem)
-	// 		}
-
-	// 		//after 6 seconds, try to hide the last 10 menu items
-	// 		time.AfterFunc(time.Second*6, func() {
-	// 			for i := 10; i < 20; i++ {
-	// 				menuItem := testInstance.menuItemArray[i]
-	// 				menuItem.Hide()
-	// 			}
-	// 		})
-	// 	}, func() {})
-
 	timeToSleep := time.Second //change accordingly
 	initInstance()
 	systray.Run(func() {
