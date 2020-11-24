@@ -84,6 +84,11 @@ func clearSlots(menuItemArray []*systray.MenuItem) {
 }
 
 func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
+	clipboardInstance.mutex.RLock()
+	defer func() {
+		// fmt.Println("release Rlock")
+		clipboardInstance.mutex.RUnlock()
+	}()
 
 	existingSlots := clipboardInstance.activeSlots
 	clipboardInstance.activeSlots = changeSlotNumTo
@@ -147,6 +152,8 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 		default:
 			change, ok := <-changes
 			if ok {
+				clipboardInstance.mutex.Lock()
+
 				val := strings.TrimSpace(change)
 				// fmt.Println("val : ", val)
 
@@ -178,6 +185,8 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 						}
 					}
 				}
+				// fmt.Println("release lock")
+				clipboardInstance.mutex.Unlock()
 			} else {
 				log.Printf("channel has been closed. exiting..")
 			}

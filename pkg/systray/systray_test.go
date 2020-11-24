@@ -85,16 +85,18 @@ func (suite *ClipTestSuite) TestClipboard() {
 		time.Sleep(time.Millisecond * 10)
 		// assert.Len(t, clipboardInstance.menuItemToVal, v1+1)
 		// assert.Len(t, clipboardInstance.valExistsMap, v2+1)
+		clipboardInstance.mutex.RLock()
 		assert.Contains(t, clipboardInstance.valExistsMap, "hello"+strconv.Itoa(i))
+		clipboardInstance.mutex.RUnlock()
 
 		if i%5 == 0 && i != 0 {
 			time.Sleep(time.Millisecond * 10)
 			changetTo := rand.Intn(20) + 1
-			fmt.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+			// fmt.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
 			fmt.Println("changed to : ", changetTo)
 			changeActiveSlots(changetTo, clipboardInstance)
 			assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
-			fmt.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+			// fmt.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
 		}
 	}
 }

@@ -1,6 +1,10 @@
 package systray
 
-import "github.com/getlantern/systray"
+import (
+	"sync"
+
+	"github.com/getlantern/systray"
+)
 
 type clipboard struct {
 	menuItemArray     []*systray.MenuItem
@@ -8,4 +12,5 @@ type clipboard struct {
 	menuItemToVal     map[*systray.MenuItem]string
 	valExistsMap      map[string]bool
 	activeSlots       int
+	mutex             sync.RWMutex
 }

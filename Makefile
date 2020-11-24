@@ -24,5 +24,4 @@ lint:
 	go list ./... | grep -v vendor | grep -v /assets/ |xargs -L1 golint -set_exit_status
 
 test:
-	go test -v -failfast ./...
-#Race
+	go test -v -failfast -race ./...
