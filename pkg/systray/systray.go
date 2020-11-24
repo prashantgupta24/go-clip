@@ -74,6 +74,9 @@ func onReady() {
 }
 
 func clearSlots(menuItemArray []*systray.MenuItem) {
+	clipboardInstance.mutex.Lock()
+	defer clipboardInstance.mutex.Unlock()
+
 	for _, menuItem := range menuItemArray {
 		menuItem.SetTitle("")
 		menuItem.SetTooltip("")
@@ -84,11 +87,8 @@ func clearSlots(menuItemArray []*systray.MenuItem) {
 }
 
 func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
-	clipboardInstance.mutex.RLock()
-	defer func() {
-		// fmt.Println("release Rlock")
-		clipboardInstance.mutex.RUnlock()
-	}()
+	clipboardInstance.mutex.Lock()
+	defer clipboardInstance.mutex.Unlock()
 
 	existingSlots := clipboardInstance.activeSlots
 	clipboardInstance.activeSlots = changeSlotNumTo
@@ -125,6 +125,9 @@ func changeActiveSlots(changeSlotNumTo int, clipboardInstance *clipboard) {
 }
 
 func addSlots(numSlots int, clipboardInstance *clipboard) {
+	clipboardInstance.mutex.Lock()
+	defer clipboardInstance.mutex.Unlock()
+
 	for i := 0; i < numSlots; i++ {
 		systray.AddSeparator()
 		menuItem := systray.AddMenuItem("", "")
