@@ -3,14 +3,28 @@ package main
 import (
 	"fmt"
 
+	"fyne.io/fyne/app"
+	"fyne.io/fyne/widget"
 	"github.com/getlantern/systray"
 	"github.com/go-clip/icon"
-	"github.com/go-clip/pkg/app"
 )
 
 func main() {
 	systray.Register(onReady, func() {})
-	app.Start()
+	// app.Start()
+
+	a := app.New()
+	w := a.NewWindow("Hello")
+
+	hello := widget.NewLabel("Hello Fyne!")
+	w.SetContent(widget.NewVBox(
+		hello,
+		widget.NewButton("Hi!", func() {
+			hello.SetText("Welcome :)")
+		}),
+	))
+
+	w.ShowAndRun()
 }
 
 func onReady() {
