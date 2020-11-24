@@ -2,14 +2,11 @@ package systray
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/getlantern/systray"
-	"github.com/go-clip/icon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -91,24 +88,14 @@ func (suite *ClipTestSuite) TestClipboard() {
 		assert.Contains(t, clipboardInstance.valExistsMap, "hello"+strconv.Itoa(i))
 
 		if i%5 == 0 && i != 0 {
+			time.Sleep(time.Millisecond * 10)
 			changetTo := rand.Intn(20) + 1
 			fmt.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
 			fmt.Println("changed to : ", changetTo)
 			changeActiveSlots(changetTo, clipboardInstance)
 			assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
 			fmt.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-			time.Sleep(time.Millisecond * 10)
 		}
-
-		// if i == 15 {
-		// 	changeActiveSlots(10, clipboardInstance)
-		// 	assert.Equal(t, 0, clipboardInstance.nextMenuItemIndex)
-		// }
-
-		// if i == 50 {
-		// 	changeActiveSlots(15, clipboardInstance)
-		// 	assert.Equal(t, 10, clipboardInstance.nextMenuItemIndex)
-		// }
 	}
 }
 
@@ -131,72 +118,72 @@ func getActiveSlots(clipboard *clipboard) int {
 }
 
 // uncomment for visual testing
-func TestMain(m *testing.M) {
+// func TestMain(m *testing.M) {
 
-	timeToSleep := time.Second //change accordingly
-	initInstance()
-	systray.Run(func() {
-		systray.SetTemplateIcon(icon.Data, icon.Data)
-		systray.SetTooltip("Clipboard")
+// 	timeToSleep := time.Second //change accordingly
+// 	initInstance()
+// 	systray.Run(func() {
+// 		systray.SetTemplateIcon(icon.Data, icon.Data)
+// 		systray.SetTooltip("Clipboard")
 
-		mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
-		go func() {
-			<-mQuitOrig.ClickedCh
-			fmt.Println("Requesting quit")
-			systray.Quit()
-			fmt.Println("Finished quitting")
-		}()
+// 		mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
+// 		go func() {
+// 			<-mQuitOrig.ClickedCh
+// 			fmt.Println("Requesting quit")
+// 			systray.Quit()
+// 			fmt.Println("Finished quitting")
+// 		}()
 
-		// We can manipulate the systray in other goroutines
-		configureMenu := systray.AddMenuItem("Configuration", "Configuration")
-		slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
-		slots5 := slotsMenu.AddSubMenuItem("5", "5")
-		slots10 := slotsMenu.AddSubMenuItem("10", "10")
-		slots20 := slotsMenu.AddSubMenuItem("20", "20")
-		clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
+// 		// We can manipulate the systray in other goroutines
+// 		configureMenu := systray.AddMenuItem("Configuration", "Configuration")
+// 		slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "SubMenu Test (middle)")
+// 		slots5 := slotsMenu.AddSubMenuItem("5", "5")
+// 		slots10 := slotsMenu.AddSubMenuItem("10", "10")
+// 		slots20 := slotsMenu.AddSubMenuItem("20", "20")
+// 		clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear")
 
-		addSlots(20, clipboardInstance)
+// 		addSlots(20, clipboardInstance)
 
-		changes := make(chan string, 10)
-		stopCh := make(chan struct{})
-		go monitorClipboard(clipboardInstance, stopCh, changes)
+// 		changes := make(chan string, 10)
+// 		stopCh := make(chan struct{})
+// 		go monitorClipboard(clipboardInstance, stopCh, changes)
 
-		go func() {
-			for {
-				select {
-				case <-slots5.ClickedCh:
-					// fmt.Println("changed to 5")
-					changeActiveSlots(5, clipboardInstance)
-				case <-slots10.ClickedCh:
-					// fmt.Println("changed to 10")
-					changeActiveSlots(10, clipboardInstance)
-				case <-slots20.ClickedCh:
-					// fmt.Println("changed to 20")
-					changeActiveSlots(20, clipboardInstance)
-				case <-clearMenu.ClickedCh:
-					// fmt.Println("clear")
-					clearSlots(clipboardInstance.menuItemArray)
-				}
-			}
-		}()
+// 		go func() {
+// 			for {
+// 				select {
+// 				case <-slots5.ClickedCh:
+// 					// fmt.Println("changed to 5")
+// 					changeActiveSlots(5, clipboardInstance)
+// 				case <-slots10.ClickedCh:
+// 					// fmt.Println("changed to 10")
+// 					changeActiveSlots(10, clipboardInstance)
+// 				case <-slots20.ClickedCh:
+// 					// fmt.Println("changed to 20")
+// 					changeActiveSlots(20, clipboardInstance)
+// 				case <-clearMenu.ClickedCh:
+// 					// fmt.Println("clear")
+// 					clearSlots(clipboardInstance.menuItemArray)
+// 				}
+// 			}
+// 		}()
 
-		for i := 0; i < 100; i++ {
-			// 	// assert.Len(, clipboardInstance.menuItemToVal, i)
-			// 	// assert.Len(t, clipboardInstance.valExistsMap, i)
-			time.Sleep(timeToSleep)
-			changes <- "hello" + strconv.Itoa(i)
+// 		for i := 0; i < 100; i++ {
+// 			// 	// assert.Len(, clipboardInstance.menuItemToVal, i)
+// 			// 	// assert.Len(t, clipboardInstance.valExistsMap, i)
+// 			time.Sleep(timeToSleep)
+// 			changes <- "hello" + strconv.Itoa(i)
 
-			if i%5 == 0 && i != 0 {
-				time.Sleep(time.Millisecond * 10)
-				changetTo := rand.Intn(15) + 5
-				log.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-				log.Println("changed to : ", changetTo)
-				changeActiveSlots(changetTo, clipboardInstance)
-				// assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
-				log.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-				// time.Sleep(time.Millisecond * 10)
-			}
-		}
+// 			if i%5 == 0 && i != 0 {
+// 				time.Sleep(time.Millisecond * 10)
+// 				changetTo := rand.Intn(15) + 5
+// 				log.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+// 				log.Println("changed to : ", changetTo)
+// 				changeActiveSlots(changetTo, clipboardInstance)
+// 				// assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
+// 				log.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
+// 				// time.Sleep(time.Millisecond * 10)
+// 			}
+// 		}
 
-	}, func() {})
-}
+// 	}, func() {})
+// }

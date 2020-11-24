@@ -148,15 +148,15 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 			change, ok := <-changes
 			if ok {
 				val := strings.TrimSpace(change)
-				fmt.Println("val : ", val)
+				// fmt.Println("val : ", val)
 
 				if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
-					fmt.Println("Index : ", clipboardInstance.nextMenuItemIndex)
+					// fmt.Println("Index : ", clipboardInstance.nextMenuItemIndex)
 					menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
 					// for _, menuItem := range clipboardInstance.menuItemArray {
 					for {
 						if !menuItem.Disabled() {
-							fmt.Println("final : ", clipboardInstance.nextMenuItemIndex)
+							// fmt.Println("final : ", clipboardInstance.nextMenuItemIndex)
 							//delete last entry, if exists
 							delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem])
 							delete(clipboardInstance.menuItemToVal, menuItem)
