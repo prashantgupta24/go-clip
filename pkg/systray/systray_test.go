@@ -53,15 +53,11 @@ func (suite *ClipTestSuite) TestChangeSlots() {
 	assert.Len(t, clipboardInstance.menuItemArray, 20)
 	assert.Equal(t, 20, clipboardInstance.activeSlots)
 
-	changeActiveSlots(5, clipboardInstance)
-	assert.Len(t, clipboardInstance.menuItemArray, 20)
-	assert.Equal(t, 5, getActiveSlots(clipboardInstance))
-
-	changeActiveSlots(15, clipboardInstance)
-	assert.Equal(t, 15, getActiveSlots(clipboardInstance))
-
-	changeActiveSlots(1, clipboardInstance)
-	assert.Equal(t, 1, getActiveSlots(clipboardInstance))
+	for i := 0; i < 20; i++ {
+		changetTo := rand.Intn(20) + 1
+		changeActiveSlots(changetTo, clipboardInstance)
+		assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
+	}
 }
 
 func (suite *ClipTestSuite) TestClipboard() {
