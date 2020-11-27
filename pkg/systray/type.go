@@ -12,6 +12,7 @@ type clipboard struct {
 	menuItemToVal     map[*systray.MenuItem]string
 	valExistsMap      map[string]bool
 	activeSlots       int
+	truncateLength    int
 	mutex             sync.RWMutex
 }
 

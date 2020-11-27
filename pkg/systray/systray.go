@@ -16,8 +16,9 @@ var clipboardInstance *clipboard
 
 func initInstance() {
 	clipboardInstance = &clipboard{
-		menuItemToVal: make(map[*systray.MenuItem]string),
-		valExistsMap:  make(map[string]bool),
+		menuItemToVal:  make(map[*systray.MenuItem]string),
+		valExistsMap:   make(map[string]bool),
+		truncateLength: 25,
 	}
 }
 
@@ -131,15 +132,22 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 	for i := 0; i < numSlots; i++ {
 		systray.AddSeparator()
 		menuItemInstance := systray.AddMenuItem("", "")
-		subMenu1 := menuItemInstance.AddSubMenuItem("Obfuscate Password", "")
-		subMenu1.Hide()
-		subMenu1.Disable()
 		menuItem := menuItem{
 			instance: menuItemInstance,
 		}
-		menuItem.subMenuItems = append(menuItem.subMenuItems, subMenu1)
-		// subMenu2 := menuItem.AddSubMenuItem("10", "10")
-		// subMenu3 := menuItem.AddSubMenuItem("20", "20")
+
+		//sub menu1
+		subMenuObfuscate := menuItemInstance.AddSubMenuItem("Obfuscate Password", "")
+		subMenuObfuscate.Hide()
+		subMenuObfuscate.Disable()
+		menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuObfuscate)
+
+		//sub menu2
+		subMenuPinToggle := menuItemInstance.AddSubMenuItem("Pin item", "")
+		subMenuPinToggle.Hide()
+		subMenuPinToggle.Disable()
+		menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuPinToggle)
+
 		clipboardInstance.menuItemArray = append(clipboardInstance.menuItemArray, menuItem)
 		go func() {
 			for {
@@ -148,9 +156,26 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 					if valToWrite, exists := clipboardInstance.menuItemToVal[menuItemInstance]; exists {
 						clip.WriteAll(valToWrite)
 					}
-				case <-subMenu1.ClickedCh:
+				case <-subMenuObfuscate.ClickedCh:
 					val := clipboardInstance.menuItemToVal[menuItemInstance]
-					menuItemInstance.SetTitle(val[:5])
+					var newTitle strings.Builder
+					newTitle.WriteString(val[:4])
+
+					for i := 4; i < min(len(val), clipboardInstance.truncateLength); i++ {
+						newTitle.WriteString("*")
+					}
+					menuItemInstance.SetTitle(newTitle.String())
+
+				case <-subMenuPinToggle.ClickedCh:
+					if subMenuPinToggle.Checked() {
+						subMenuPinToggle.SetTitle("Pin item")
+						subMenuPinToggle.Uncheck()
+						menuItemInstance.Uncheck()
+					} else {
+						subMenuPinToggle.SetTitle("Unpin item")
+						subMenuPinToggle.Check()
+						menuItemInstance.Check()
+					}
 				}
 			}
 		}()
@@ -173,12 +198,13 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 				// fmt.Println("val : ", val)
 
 				if _, exists := clipboardInstance.valExistsMap[val]; val != "" && !exists {
-					// fmt.Println("Index : ", clipboardInstance.nextMenuItemIndex)
-					menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
 					// for _, menuItem := range clipboardInstance.menuItemArray {
 					for {
-						if !menuItem.instance.Disabled() {
-							// fmt.Println("final : ", clipboardInstance.nextMenuItemIndex)
+						menuItem := clipboardInstance.menuItemArray[clipboardInstance.nextMenuItemIndex]
+						fmt.Println("Index : ", clipboardInstance.nextMenuItemIndex)
+
+						if !menuItem.instance.Disabled() && !menuItem.instance.Checked() {
+							fmt.Println("final : ", clipboardInstance.nextMenuItemIndex)
 							//delete last entry, if exists
 							delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem.instance])
 							delete(clipboardInstance.menuItemToVal, menuItem.instance)
@@ -187,8 +213,8 @@ func monitorClipboard(clipboardInstance *clipboard, stopCh chan struct{}, change
 							clipboardInstance.menuItemToVal[menuItem.instance] = val
 							//truncate to fit on app
 							valTrunc := val
-							if len(val) > 20 {
-								valTrunc = val[:20] + "... (" + strconv.Itoa(len(val)) + " chars)"
+							if len(val) > clipboardInstance.truncateLength {
+								valTrunc = val[:clipboardInstance.truncateLength] + "... (" + strconv.Itoa(len(val)) + " chars)"
 							}
 							menuItem.instance.SetTitle(valTrunc)
 							menuItem.instance.SetTooltip(val)
