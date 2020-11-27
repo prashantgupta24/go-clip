@@ -108,7 +108,7 @@ func getActiveSlots(clipboard *clipboard) int {
 
 	activeSlots := 0
 	for _, menuItem := range clipboardInstance.menuItemArray {
-		if !menuItem.Disabled() {
+		if !menuItem.instance.Disabled() {
 			activeSlots++
 		}
 	}
