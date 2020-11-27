@@ -122,7 +122,7 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 
 	for i := 0; i < numSlots; i++ {
 		systray.AddSeparator()
-		menuItemInstance := systray.AddMenuItem("", "")
+		menuItemInstance := systray.AddMenuItem("", "(empty slot)")
 		menuItem := menuItem{
 			instance: menuItemInstance,
 		}
