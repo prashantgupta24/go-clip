@@ -13,6 +13,7 @@ type clipboard struct {
 	valExistsMap      map[string]bool
 	activeSlots       int
 	truncateLength    int
+	pwShowLength      int
 	mutex             sync.RWMutex
 }
 
