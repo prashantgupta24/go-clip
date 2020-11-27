@@ -17,7 +17,7 @@ func initInstance() {
 	clipboardInstance = &clipboard{
 		menuItemToVal:  make(map[*systray.MenuItem]string),
 		valExistsMap:   make(map[string]bool),
-		truncateLength: 25,
+		truncateLength: 20,
 		pwShowLength:   4,
 	}
 }
