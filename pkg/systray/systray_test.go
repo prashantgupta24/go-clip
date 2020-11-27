@@ -97,13 +97,6 @@ func (suite *ClipTestSuite) TestClipboard() {
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func getActiveSlots(clipboard *clipboard) int {
 
 	activeSlots := 0
