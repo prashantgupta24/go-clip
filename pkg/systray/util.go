@@ -14,16 +14,17 @@ func min(a, b int) int {
 func deleteMenuItem(clipboardInstance *clipboard, menuItem menuItem) {
 	menuItem.instance.SetTitle("")
 	menuItem.instance.SetTooltip("")
+
 	delete(clipboardInstance.valExistsMap, clipboardInstance.menuItemToVal[menuItem.instance])
 	delete(clipboardInstance.menuItemToVal, menuItem.instance)
 
+	for _, subMenu := range menuItem.subMenuItems {
+		subMenu.Hide()
+		subMenu.Disable()
+	}
 }
 
 func acceptVal(clipboardInstance *clipboard, menuItem menuItem, val string) {
-
-	clipboardInstance.valExistsMap[val] = true
-	clipboardInstance.menuItemToVal[menuItem.instance] = val
-
 	//truncate to fit on screen
 	valTrunc := val
 	if len(val) > clipboardInstance.truncateLength {
@@ -32,6 +33,10 @@ func acceptVal(clipboardInstance *clipboard, menuItem menuItem, val string) {
 
 	menuItem.instance.SetTitle(valTrunc)
 	menuItem.instance.SetTooltip(val)
+
+	clipboardInstance.valExistsMap[val] = true
+	clipboardInstance.menuItemToVal[menuItem.instance] = val
+
 	for _, subMenuItem := range menuItem.subMenuItems {
 		subMenuItem.Show()
 		subMenuItem.Enable()
