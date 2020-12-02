@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/getlantern/systray"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -58,6 +59,40 @@ func (suite *ClipTestSuite) TestChangeSlots() {
 		changeActiveSlots(changetTo, clipboardInstance)
 		assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
 	}
+}
+
+func (suite *ClipTestSuite) TestObfuscateVal() {
+	t := suite.T()
+	menuItem := menuItem{
+		instance:     &systray.MenuItem{},
+		subMenuItems: make(map[subMenu]*systray.MenuItem),
+	}
+	menuItem.subMenuItems[obfuscateMenu] = &systray.MenuItem{}
+
+	//test1
+	clipboardInstance.menuItemToVal[menuItem.instance] = "test_value"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "test******", getTitle(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+
+	//test2
+	clipboardInstance.menuItemToVal[menuItem.instance] = "test"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "test", getTitle(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+
+	//test3
+	clipboardInstance.menuItemToVal[menuItem.instance] = "this_is_a_big_value"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "this***************", getTitle(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+}
+
+func (suite *ClipTestSuite) TestAcceptVal() {
+
 }
 
 func (suite *ClipTestSuite) TestClipboard() {

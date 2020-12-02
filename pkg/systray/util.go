@@ -1,6 +1,7 @@
 package systray
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -98,4 +99,28 @@ func truncateVal(clipboardInstance *clipboard, val string) string {
 		valTrunc = val[:clipboardInstance.truncateLength] + "... (" + strconv.Itoa(len(val)) + " chars)"
 	}
 	return valTrunc
+}
+
+func getTitle(menuItem menuItem) string {
+	menuItemReflect := reflect.ValueOf(menuItem.instance).Elem()
+
+	for i := 0; i < menuItemReflect.NumField(); i++ {
+		fieldName := menuItemReflect.Type().Field(i).Name
+		if fieldName == "title" {
+			return menuItemReflect.Field(i).String()
+		}
+	}
+	return ""
+}
+
+func getToolTip(menuItem menuItem) string {
+	menuItemReflect := reflect.ValueOf(menuItem.instance).Elem()
+
+	for i := 0; i < menuItemReflect.NumField(); i++ {
+		fieldName := menuItemReflect.Type().Field(i).Name
+		if fieldName == "tooltip" {
+			return menuItemReflect.Field(i).String()
+		}
+	}
+	return ""
 }
