@@ -13,6 +13,13 @@ import (
 
 var clipboardInstance *clipboard
 
+type subMenu string
+
+const (
+	pinMenu       subMenu = "pin"
+	obfuscateMenu subMenu = "obfuscate"
+)
+
 func initInstance() {
 	clipboardInstance = &clipboard{
 		menuItemToVal:  make(map[*systray.MenuItem]string),
@@ -124,20 +131,23 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 		systray.AddSeparator()
 		menuItemInstance := systray.AddMenuItem("", "(empty slot)")
 		menuItem := menuItem{
-			instance: menuItemInstance,
+			instance:     menuItemInstance,
+			subMenuItems: make(map[subMenu]*systray.MenuItem),
 		}
 
 		//sub menu1
 		subMenuPinToggle := menuItemInstance.AddSubMenuItem("Pin item", "")
 		subMenuPinToggle.Hide()
 		subMenuPinToggle.Disable()
-		menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuPinToggle)
+		// menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuPinToggle)
+		menuItem.subMenuItems[pinMenu] = subMenuPinToggle
 
 		//sub menu2
 		subMenuObfuscate := menuItemInstance.AddSubMenuItem("Obfuscate Password", "")
 		subMenuObfuscate.Hide()
 		subMenuObfuscate.Disable()
-		menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuObfuscate)
+		// menuItem.subMenuItems = append(menuItem.subMenuItems, subMenuObfuscate)
+		menuItem.subMenuItems[obfuscateMenu] = subMenuObfuscate
 
 		clipboardInstance.menuItemArray = append(clipboardInstance.menuItemArray, menuItem)
 		go func() {
@@ -148,14 +158,22 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 						clip.WriteAll(valToWrite)
 					}
 				case <-subMenuObfuscate.ClickedCh:
-					val := clipboardInstance.menuItemToVal[menuItemInstance]
-					var newTitle strings.Builder
-					newTitle.WriteString(val[:clipboardInstance.pwShowLength])
+					if subMenuObfuscate.Checked() {
+						val := clipboardInstance.menuItemToVal[menuItemInstance]
+						menuItemInstance.SetTitle(truncateVal(clipboardInstance, val))
+						subMenuObfuscate.Uncheck()
+					} else {
+						obfuscateVal(clipboardInstance, menuItem)
+						// val := clipboardInstance.menuItemToVal[menuItemInstance]
+						// var newTitle strings.Builder
+						// newTitle.WriteString(val[:min(len(val), clipboardInstance.pwShowLength)])
 
-					for i := clipboardInstance.pwShowLength; i < min(len(val), clipboardInstance.truncateLength); i++ {
-						newTitle.WriteString("*")
+						// for i := clipboardInstance.pwShowLength; i < min(len(val), clipboardInstance.truncateLength); i++ {
+						// 	newTitle.WriteString("*")
+						// }
+						// menuItemInstance.SetTitle(newTitle.String())
+						// subMenuObfuscate.Check()
 					}
-					menuItemInstance.SetTitle(newTitle.String())
 
 				case <-subMenuPinToggle.ClickedCh:
 					if subMenuPinToggle.Checked() {
@@ -163,10 +181,12 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 						subMenuPinToggle.Uncheck()
 						menuItemInstance.Uncheck()
 					} else {
-						subMenuPinToggle.SetTitle("Unpin item")
-						subMenuPinToggle.Check()
-						menuItemInstance.Check()
+						substituteMenuItem(clipboardInstance, menuItem)
+						// subMenuPinToggle.SetTitle("Unpin item")
+						// subMenuPinToggle.Check()
+						// menuItemInstance.Check()
 					}
+
 				}
 			}
 		}()
