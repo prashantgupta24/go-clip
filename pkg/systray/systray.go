@@ -156,6 +156,8 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 						clip.WriteAll(valToWrite)
 					}
 				case <-subMenuObfuscate.ClickedCh:
+					clipboardInstance.mutex.Lock()
+					// fmt.Println("lock")
 					if subMenuObfuscate.Checked() {
 						val := clipboardInstance.menuItemToVal[menuItemInstance]
 						menuItemInstance.SetTitle(truncateVal(clipboardInstance, val))
@@ -163,7 +165,10 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 					} else {
 						obfuscateVal(clipboardInstance, menuItem)
 					}
+					// fmt.Println("unlock")
+					clipboardInstance.mutex.Unlock()
 				case <-subMenuPinToggle.ClickedCh:
+					clipboardInstance.mutex.Lock()
 					if subMenuPinToggle.Checked() {
 						subMenuPinToggle.SetTitle("Pin item")
 						subMenuPinToggle.Uncheck()
@@ -171,6 +176,7 @@ func addSlots(numSlots int, clipboardInstance *clipboard) {
 					} else {
 						substituteMenuItem(clipboardInstance, menuItem)
 					}
+					clipboardInstance.mutex.Unlock()
 				}
 			}
 		}()
