@@ -34,6 +34,7 @@ func readAll() (string, error) {
 	return string(out), nil
 }
 
+//WriteAll writes to clipboard
 func WriteAll(text string) error {
 	copyCmd := getCopyCommand()
 	in, err := copyCmd.StdinPipe()
