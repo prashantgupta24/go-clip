@@ -18,7 +18,6 @@ type clipboard struct {
 }
 
 type menuItem struct {
-	instance *systray.MenuItem
-	// subMenuItems []*systray.MenuItem
+	instance     *systray.MenuItem
 	subMenuItems map[subMenu]*systray.MenuItem
 }

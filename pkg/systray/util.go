@@ -15,6 +15,7 @@ func obfuscateVal(clipboardInstance *clipboard, menuItem menuItem) {
 		newTitle.WriteString("*")
 	}
 	menuItem.instance.SetTitle(newTitle.String())
+	menuItem.instance.SetTooltip(newTitle.String())
 	menuItem.subMenuItems[obfuscateMenu].Check()
 }
 

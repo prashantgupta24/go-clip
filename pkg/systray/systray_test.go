@@ -1,7 +1,6 @@
 package systray
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -74,6 +73,7 @@ func (suite *ClipTestSuite) TestObfuscateVal() {
 	obfuscateVal(clipboardInstance, menuItem)
 
 	assert.Equal(t, "test******", getTitle(menuItem))
+	assert.Equal(t, "test******", getToolTip(menuItem))
 	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
 
 	//test2
@@ -81,6 +81,7 @@ func (suite *ClipTestSuite) TestObfuscateVal() {
 	obfuscateVal(clipboardInstance, menuItem)
 
 	assert.Equal(t, "test", getTitle(menuItem))
+	assert.Equal(t, "test", getToolTip(menuItem))
 	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
 
 	//test3
@@ -88,11 +89,34 @@ func (suite *ClipTestSuite) TestObfuscateVal() {
 	obfuscateVal(clipboardInstance, menuItem)
 
 	assert.Equal(t, "this***************", getTitle(menuItem))
+	assert.Equal(t, "this***************", getToolTip(menuItem))
 	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
 }
 
 func (suite *ClipTestSuite) TestAcceptVal() {
+	t := suite.T()
+	addSlots(20, clipboardInstance)
+	for i := 0; i < 20; i++ {
+		menuItem := clipboardInstance.menuItemArray[i]
+		val1 := "test_message_" + strconv.Itoa(i)
 
+		assert.Equal(t, "", getTitle(menuItem))
+		assert.Equal(t, "(empty slot)", getToolTip(menuItem))
+		assert.False(t, clipboardInstance.valExistsMap[val1])
+		assert.NotContains(t, clipboardInstance.menuItemToVal, menuItem.instance)
+		assert.True(t, menuItem.subMenuItems[obfuscateMenu].Disabled())
+		assert.True(t, menuItem.subMenuItems[pinMenu].Disabled())
+
+		acceptVal(clipboardInstance, menuItem, val1)
+
+		assert.Equal(t, val1, getTitle(menuItem))
+		assert.Equal(t, val1, getToolTip(menuItem))
+		assert.True(t, clipboardInstance.valExistsMap[val1])
+		assert.Contains(t, clipboardInstance.menuItemToVal, menuItem.instance)
+		assert.Equal(t, val1, clipboardInstance.menuItemToVal[menuItem.instance])
+		assert.False(t, menuItem.subMenuItems[obfuscateMenu].Disabled())
+		assert.False(t, menuItem.subMenuItems[pinMenu].Disabled())
+	}
 }
 
 func (suite *ClipTestSuite) TestClipboard() {
@@ -124,7 +148,7 @@ func (suite *ClipTestSuite) TestClipboard() {
 			time.Sleep(time.Millisecond * 10)
 			changetTo := rand.Intn(20) + 1
 			// fmt.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-			fmt.Println("changed to : ", changetTo)
+			// fmt.Println("changed to : ", changetTo)
 			changeActiveSlots(changetTo, clipboardInstance)
 			assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
 			// fmt.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
