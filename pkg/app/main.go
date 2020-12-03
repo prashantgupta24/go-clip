@@ -46,6 +46,7 @@ func newButton(id int) *customButton {
 	return b
 }
 
+//Start the app
 func Start() {
 
 	a := app.New()
