@@ -1,12 +1,12 @@
 package systray
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/getlantern/systray"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -60,6 +60,172 @@ func (suite *ClipTestSuite) TestChangeSlots() {
 	}
 }
 
+func (suite *ClipTestSuite) TestObfuscateVal() {
+	t := suite.T()
+	menuItem := menuItem{
+		instance:     &systray.MenuItem{},
+		subMenuItems: make(map[subMenu]*systray.MenuItem),
+	}
+	menuItem.subMenuItems[obfuscateMenu] = &systray.MenuItem{}
+
+	//test1
+	clipboardInstance.menuItemToVal[menuItem.instance] = "test_value"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "test******", getTitle(menuItem))
+	assert.Equal(t, "test******", getToolTip(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+
+	//test2
+	clipboardInstance.menuItemToVal[menuItem.instance] = "test"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "test", getTitle(menuItem))
+	assert.Equal(t, "test", getToolTip(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+
+	//test3
+	clipboardInstance.menuItemToVal[menuItem.instance] = "this_is_a_big_value"
+	obfuscateVal(clipboardInstance, menuItem)
+
+	assert.Equal(t, "this***************", getTitle(menuItem))
+	assert.Equal(t, "this***************", getToolTip(menuItem))
+	assert.True(t, menuItem.subMenuItems[obfuscateMenu].Checked())
+}
+
+func (suite *ClipTestSuite) TestAcceptVal() {
+	t := suite.T()
+	addSlots(20, clipboardInstance)
+	for i := 0; i < 20; i++ {
+		menuItem := clipboardInstance.menuItemArray[i]
+		val1 := "test_message_" + strconv.Itoa(i)
+
+		assert.Equal(t, "", getTitle(menuItem))
+		assert.Equal(t, "(empty slot)", getToolTip(menuItem))
+		assert.False(t, clipboardInstance.valExistsMap[val1])
+		assert.NotContains(t, clipboardInstance.menuItemToVal, menuItem.instance)
+		assert.True(t, menuItem.subMenuItems[obfuscateMenu].Disabled())
+		assert.True(t, menuItem.subMenuItems[pinMenu].Disabled())
+
+		acceptVal(clipboardInstance, menuItem, val1)
+
+		assert.Equal(t, val1, getTitle(menuItem))
+		assert.Equal(t, val1, getToolTip(menuItem))
+		assert.True(t, clipboardInstance.valExistsMap[val1])
+		assert.Contains(t, clipboardInstance.menuItemToVal, menuItem.instance)
+		assert.Equal(t, val1, clipboardInstance.menuItemToVal[menuItem.instance])
+		assert.False(t, menuItem.subMenuItems[obfuscateMenu].Disabled())
+		assert.False(t, menuItem.subMenuItems[pinMenu].Disabled())
+	}
+}
+
+func (suite *ClipTestSuite) TestSubstituteMenuItem() {
+	t := suite.T()
+	addSlots(20, clipboardInstance)
+	menuItem := menuItem{
+		instance:     &systray.MenuItem{},
+		subMenuItems: make(map[subMenu]*systray.MenuItem),
+	}
+	menuItem.subMenuItems[pinMenu] = &systray.MenuItem{}
+	menuItem.subMenuItems[obfuscateMenu] = &systray.MenuItem{}
+	menuItem.subMenuItems[obfuscateMenu].Check()
+
+	existingMenuItem := getExistingSlotToReplace()
+
+	valNew := "test_value_new"
+	valExisting := "test_value_existing"
+
+	acceptVal(clipboardInstance, menuItem, valNew)
+	acceptVal(clipboardInstance, existingMenuItem, valExisting)
+
+	assert.NotNil(t, existingMenuItem)
+	assert.False(t, existingMenuItem.instance.Checked())
+	assert.False(t, menuItem.instance.Checked())
+	assert.Equal(t, valNew, getTitle(menuItem))
+	assert.Equal(t, valNew, getToolTip(menuItem))
+	assert.Equal(t, valExisting, getToolTip(existingMenuItem))
+	assert.Equal(t, valExisting, getToolTip(existingMenuItem))
+
+	substituteMenuItem(clipboardInstance, menuItem)
+
+	assert.True(t, existingMenuItem.instance.Checked())
+	assert.False(t, menuItem.instance.Checked())
+	assert.Equal(t, valExisting, getTitle(menuItem))
+	assert.Equal(t, valExisting, getToolTip(menuItem))
+	assert.Equal(t, "test**********", getTitle(existingMenuItem))
+	assert.Equal(t, "test**********", getToolTip(existingMenuItem))
+
+}
+func (suite *ClipTestSuite) TestSlotChannels() {
+	t := suite.T()
+	addSlots(20, clipboardInstance)
+
+	for i := 0; i < clipboardInstance.activeSlots; i++ {
+
+		menuItem := clipboardInstance.menuItemArray[i]
+		obfuscateMenu := menuItem.subMenuItems[obfuscateMenu]
+
+		//obfuscate
+		obfuscateMenu.ClickedCh <- struct{}{}
+		time.Sleep(time.Millisecond * 10)
+		clipboardInstance.mutex.RLock()
+		assert.True(t, obfuscateMenu.Checked())
+		clipboardInstance.mutex.RUnlock()
+
+		//unobfuscate
+		obfuscateMenu.ClickedCh <- struct{}{}
+		time.Sleep(time.Millisecond * 10)
+		clipboardInstance.mutex.RLock()
+		assert.False(t, obfuscateMenu.Checked())
+		clipboardInstance.mutex.RUnlock()
+
+		//pin
+		existingMenuItem := getExistingSlotToReplace()
+		pinMenuOrg := menuItem.subMenuItems[pinMenu]
+		pinMenuOrg.ClickedCh <- struct{}{}
+		time.Sleep(time.Millisecond * 10)
+		clipboardInstance.mutex.RLock()
+		assert.NotNil(t, existingMenuItem)
+		assert.True(t, existingMenuItem.instance.Checked())
+		if i != 0 { //first slot gets replaced by itself
+			assert.False(t, menuItem.instance.Checked())
+		}
+		clipboardInstance.mutex.RUnlock()
+
+		//unpin
+		existingPinMenu := existingMenuItem.subMenuItems[pinMenu]
+		existingPinMenu.ClickedCh <- struct{}{}
+		time.Sleep(time.Millisecond * 10)
+		clipboardInstance.mutex.RLock()
+		assert.False(t, existingMenuItem.instance.Checked())
+		clipboardInstance.mutex.RUnlock()
+
+	}
+}
+
+func getExistingSlotToReplace() menuItem {
+	for i := 0; i < clipboardInstance.activeSlots; i++ {
+		existingMenuItem := clipboardInstance.menuItemArray[i]
+		if !existingMenuItem.instance.Disabled() && !existingMenuItem.instance.Checked() {
+			return existingMenuItem
+		}
+	}
+	return menuItem{}
+}
+func (suite *ClipTestSuite) TestClearSlots() {
+	t := suite.T()
+	addSlots(20, clipboardInstance)
+	clearSlots(clipboardInstance.menuItemArray)
+	assert.Equal(t, 0, clipboardInstance.nextMenuItemIndex)
+}
+
+func (suite *ClipTestSuite) TestTruncateVal() {
+	t := suite.T()
+	val := "this_will_be_truncated_into_something_small"
+	truncVal := truncateVal(clipboardInstance, val)
+	assert.Equal(t, val[:clipboardInstance.truncateLength]+"... ("+strconv.Itoa(len(val))+" chars)", truncVal)
+}
+
 func (suite *ClipTestSuite) TestClipboard() {
 	t := suite.T()
 
@@ -89,7 +255,7 @@ func (suite *ClipTestSuite) TestClipboard() {
 			time.Sleep(time.Millisecond * 10)
 			changetTo := rand.Intn(20) + 1
 			// fmt.Println("pclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
-			fmt.Println("changed to : ", changetTo)
+			// fmt.Println("changed to : ", changetTo)
 			changeActiveSlots(changetTo, clipboardInstance)
 			assert.Equal(t, changetTo, getActiveSlots(clipboardInstance))
 			// fmt.Println("aclipboardInstance.nextMenuItemIndex : ", clipboardInstance.nextMenuItemIndex)
@@ -97,18 +263,11 @@ func (suite *ClipTestSuite) TestClipboard() {
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func getActiveSlots(clipboard *clipboard) int {
 
 	activeSlots := 0
 	for _, menuItem := range clipboardInstance.menuItemArray {
-		if !menuItem.Disabled() {
+		if !menuItem.instance.Disabled() {
 			activeSlots++
 		}
 	}
