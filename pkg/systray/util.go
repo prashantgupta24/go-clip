@@ -103,25 +103,27 @@ func truncateVal(clipboardInstance *clipboard, val string) string {
 }
 
 func getTitle(menuItem menuItem) string {
+	title := ""
 	menuItemReflect := reflect.ValueOf(menuItem.instance).Elem()
 
 	for i := 0; i < menuItemReflect.NumField(); i++ {
 		fieldName := menuItemReflect.Type().Field(i).Name
 		if fieldName == "title" {
-			return menuItemReflect.Field(i).String()
+			title = menuItemReflect.Field(i).String()
 		}
 	}
-	return ""
+	return title
 }
 
 func getToolTip(menuItem menuItem) string {
+	toolTip := ""
 	menuItemReflect := reflect.ValueOf(menuItem.instance).Elem()
 
 	for i := 0; i < menuItemReflect.NumField(); i++ {
 		fieldName := menuItemReflect.Type().Field(i).Name
 		if fieldName == "tooltip" {
-			return menuItemReflect.Field(i).String()
+			toolTip = menuItemReflect.Field(i).String()
 		}
 	}
-	return ""
+	return toolTip
 }

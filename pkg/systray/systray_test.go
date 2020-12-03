@@ -120,7 +120,7 @@ func (suite *ClipTestSuite) TestAcceptVal() {
 }
 
 func (suite *ClipTestSuite) TestSubstituteMenuItem() {
-	// t := suite.T()
+	t := suite.T()
 	addSlots(20, clipboardInstance)
 	menuItem := menuItem{
 		instance:     &systray.MenuItem{},
@@ -128,10 +128,33 @@ func (suite *ClipTestSuite) TestSubstituteMenuItem() {
 	}
 	menuItem.subMenuItems[pinMenu] = &systray.MenuItem{}
 	menuItem.subMenuItems[obfuscateMenu] = &systray.MenuItem{}
+	menuItem.subMenuItems[obfuscateMenu].Check()
+
+	existingMenuItem := getExistingSlotToReplace()
+
+	valNew := "test_value_new"
+	valExisting := "test_value_existing"
+
+	acceptVal(clipboardInstance, menuItem, valNew)
+	acceptVal(clipboardInstance, existingMenuItem, valExisting)
+
+	assert.NotNil(t, existingMenuItem)
+	assert.False(t, existingMenuItem.instance.Checked())
+	assert.False(t, menuItem.instance.Checked())
+	assert.Equal(t, valNew, getTitle(menuItem))
+	assert.Equal(t, valNew, getToolTip(menuItem))
+	assert.Equal(t, valExisting, getToolTip(existingMenuItem))
+	assert.Equal(t, valExisting, getToolTip(existingMenuItem))
 
 	substituteMenuItem(clipboardInstance, menuItem)
 
-	//TODO test
+	assert.True(t, existingMenuItem.instance.Checked())
+	assert.False(t, menuItem.instance.Checked())
+	assert.Equal(t, valExisting, getTitle(menuItem))
+	assert.Equal(t, valExisting, getToolTip(menuItem))
+	assert.Equal(t, "test**********", getTitle(existingMenuItem))
+	assert.Equal(t, "test**********", getToolTip(existingMenuItem))
+
 }
 func (suite *ClipTestSuite) TestSlotChannels() {
 	t := suite.T()
@@ -194,6 +217,13 @@ func (suite *ClipTestSuite) TestClearSlots() {
 	addSlots(20, clipboardInstance)
 	clearSlots(clipboardInstance.menuItemArray)
 	assert.Equal(t, 0, clipboardInstance.nextMenuItemIndex)
+}
+
+func (suite *ClipTestSuite) TestTruncateVal() {
+	t := suite.T()
+	val := "this_will_be_truncated_into_something_small"
+	truncVal := truncateVal(clipboardInstance, val)
+	assert.Equal(t, val[:clipboardInstance.truncateLength]+"... ("+strconv.Itoa(len(val))+" chars)", truncVal)
 }
 
 func (suite *ClipTestSuite) TestClipboard() {
