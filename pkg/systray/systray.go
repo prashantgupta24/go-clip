@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
-	"github.com/go-clip/clip"
-	"github.com/go-clip/icon"
+	"github.com/prashantgupta24/go-clip/clip"
+	"github.com/prashantgupta24/go-clip/icon"
 )
 
 var clipboardInstance *clipboard

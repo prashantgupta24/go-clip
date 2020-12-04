@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/widget"
-	"github.com/go-clip/clip"
+	"github.com/prashantgupta24/go-clip/clip"
 )
 
 var (

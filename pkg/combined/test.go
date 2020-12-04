@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/widget"
 	"github.com/getlantern/systray"
-	"github.com/go-clip/icon"
+	"github.com/prashantgupta24/go-clip/icon"
 )
 
 func main() {

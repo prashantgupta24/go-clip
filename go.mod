@@ -1,4 +1,4 @@
-module github.com/go-clip
+module github.com/prashantgupta24/go-clip
 
 go 1.14
 
