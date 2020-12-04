@@ -21,7 +21,7 @@ A minimalistic clipboard manager for Mac.
 
 ## Demo
 
-![](https://github.com/prashantgupta24/go-clip/tree/readme/demo/go-clip-demo.gif)
+![](https://github.com/prashantgupta24/go-clip/blob/readme/demo/go-clip-demo.gif)
 
 ## How it works
 
