@@ -12,20 +12,33 @@ A minimalistic clipboard manager for Mac.
 <!-- code_chunk_output -->
 
 - [Demo](#demo)
-- [How it works](#how-it-works)
+- [Basic functionality](#basic-functionality)
+  - [Pin](#pin)
+  - [Obfuscate](#obfuscate)
 - [How to install](#how-to-install)
   - [Install from binary](#install-from-binary)
   - [Install from source](#install-from-source)
+- [Future work](#future-work)
 
 <!-- /code_chunk_output -->
 
 ## Demo
 
-![](https://github.com/prashantgupta24/go-clip/blob/readme/demo/go-clip-demo.gif)
+![](https://github.com/prashantgupta24/go-clip/blob/master/demo/go-clip-demo.gif)
 
-## How it works
+## Basic functionality
 
-Thanks to github.com/getlantern/systray. I am waiting for fyne.io to release their integration with systray, so that I can offer a pop-out clipboard experience along with systray. Right now both systray and external app can't exist simultaneously, since both have to be executed on the main thread. (Ref https://github.com/fyne-io/fyne/issues/283)
+It DOES NOT SAVE YOUR TEXT anywhere on your computer. It is all in-memory, you will lose all your data if you quit the application.
+
+This application is intended to help you manage multiple short-lived clippings, it is not meant as a password store or a place to save data for later use.
+
+### Pin
+
+Pinning clipping will prevent them from being over-written when the round-robin loop comes back.
+
+### Obfuscate
+
+In case you copy a password and want to keep it in the tool, you can obfuscate it. It will mark it with `****`. You can still copy the whole password once you click on it, it just won't show up on the application.
 
 ## How to install
 
@@ -44,3 +57,7 @@ Thanks to github.com/getlantern/systray. I am waiting for fyne.io to release the
 Make sure you have `go` installed. Once that is done, clone this repo and run `Make`, it should create the `go-clip.app` and open the folder where it was built for you. Copy the .app to your `Applications` folder like any other application.
 
 Double click on the app, and the clipboard icon should start displaying on your system tray. Copy a piece of text to see it on the app!
+
+## Future work
+
+Thanks to `github.com/getlantern/systray`, I am able to provide a system tray functionality. I am waiting for `fyne.io` to release their integration with systray, so that I can offer a pop-out clipboard experience along with systray. Right now both systray and external app can't exist simultaneously, since both have to be executed on the main thread. (Ref https://github.com/fyne-io/fyne/issues/283)
