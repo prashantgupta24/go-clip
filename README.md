@@ -11,11 +11,21 @@ A minimalistic clipboard manager for Mac.
 
 <!-- code_chunk_output -->
 
+- [Demo](#demo)
+- [How it works](#how-it-works)
 - [How to install](#how-to-install)
   - [Install from binary](#install-from-binary)
   - [Install from source](#install-from-source)
 
 <!-- /code_chunk_output -->
+
+## Demo
+
+![](https://github.com/prashantgupta24/go-clip/tree/readme/demo/go-clip-demo.gif)
+
+## How it works
+
+Thanks to github.com/getlantern/systray. I am waiting for fyne.io to release their integration with systray, so that I can offer a pop-out clipboard experience along with systray. Right now both systray and external app can't exist simultaneously, since both have to be executed on the main thread. (Ref https://github.com/fyne-io/fyne/issues/283)
 
 ## How to install
 
