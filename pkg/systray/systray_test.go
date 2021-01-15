@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
+	"github.com/prashantgupta24/go-clip/clip"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -230,6 +231,25 @@ func (suite *ClipTestSuite) TestTruncateVal() {
 	val := "this_will_be_truncated_into_something_small"
 	truncVal := truncateVal(clipboardInstance, val)
 	assert.Equal(t, val[:clipboardInstance.truncateLength]+"... ("+strconv.Itoa(len(val))+" chars)", truncVal)
+}
+
+func (suite *ClipTestSuite) TestClickVal() {
+	t := suite.T()
+
+	changes := make(chan string, 1)
+	stopCh := make(chan struct{})
+	go clip.Monitor(time.Millisecond*50, stopCh, changes)
+
+	addSlots(1, clipboardInstance)
+	menuItem := clipboardInstance.menuItemArray[0].instance
+
+	for i := 0; i < 10; i++ {
+		val := "test_val_" + strconv.Itoa(i)
+		clipboardInstance.menuItemToVal[menuItem] = val
+		menuItem.ClickedCh <- struct{}{}
+		value := <-changes
+		assert.Equal(t, val, value)
+	}
 }
 
 func (suite *ClipTestSuite) TestClipboard() {
