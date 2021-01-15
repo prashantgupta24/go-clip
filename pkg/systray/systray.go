@@ -39,13 +39,6 @@ func onReady() {
 	systray.SetTemplateIcon(icon.Data, icon.Data)
 	systray.SetTooltip("Clipboard")
 	mQuitOrig := systray.AddMenuItem("Quit", "Quit the app")
-	go func() {
-		<-mQuitOrig.ClickedCh
-		fmt.Println("Requesting quit")
-		systray.Quit()
-		fmt.Println("Finished quitting")
-	}()
-
 	configureMenu := systray.AddMenuItem("Configuration", "")
 	slotsMenu := configureMenu.AddSubMenuItem("slotsMenu", "")
 	slots5 := slotsMenu.AddSubMenuItem("5", "")
@@ -53,15 +46,13 @@ func onReady() {
 	slots20 := slotsMenu.AddSubMenuItem("20", "")
 	clearMenu := configureMenu.AddSubMenuItem("Clear", "Clear all entries (except pinned)")
 
-	addSlots(20, clipboardInstance)
-	changeActiveSlots(10, clipboardInstance)
-
-	//monitor clipboard
-	changes := make(chan string, 10)
-	stopCh := make(chan struct{})
-	go clip.Monitor(time.Millisecond*500, stopCh, changes)
-	go monitorClipboard(clipboardInstance, stopCh, changes)
-
+	go func() {
+		<-mQuitOrig.ClickedCh
+		fmt.Println("Requesting quit")
+		systray.Quit()
+		fmt.Println("Finished quitting")
+	}()
+	initializeClipBoard()
 	for {
 		select {
 		case <-slots5.ClickedCh:
@@ -74,6 +65,20 @@ func onReady() {
 			clearSlots(clipboardInstance.menuItemArray)
 		}
 	}
+
+}
+
+func initializeClipBoard() {
+
+	addSlots(20, clipboardInstance)
+	changeActiveSlots(10, clipboardInstance)
+
+	//monitor clipboard
+	changes := make(chan string, 10)
+	stopCh := make(chan struct{})
+	go clip.Monitor(time.Millisecond*500, stopCh, changes)
+	go monitorClipboard(clipboardInstance, stopCh, changes)
+
 }
 
 func clearSlots(menuItemArray []menuItem) {

@@ -31,6 +31,12 @@ func (suite *ClipTestSuite) TestInit() {
 	assert.Equal(t, clipboardInstance.activeSlots, 0)
 }
 
+func (suite *ClipTestSuite) TestInitializeClipBoard() {
+	t := suite.T()
+	initializeClipBoard()
+	assert.Equal(t, 10, clipboardInstance.activeSlots)
+}
+
 func (suite *ClipTestSuite) TestAddSlots() {
 	t := suite.T()
 	assert.Len(t, clipboardInstance.menuItemArray, 0)
