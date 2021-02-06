@@ -2,6 +2,7 @@ package systray
 
 import (
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -23,8 +24,10 @@ func acceptVal(clipboardInstance *clipboard, menuItem menuItem, val string) {
 	//truncate to fit on screen
 	valTrunc := truncateVal(clipboardInstance, val)
 
-	menuItem.instance.SetTitle(valTrunc)
-	menuItem.instance.SetTooltip(val)
+	// menuItem.instance.SetTitle(valTrunc)
+	// menuItem.instance.SetTooltip(val)
+	menuItem.instance.SetTitle(removeNonASCII(valTrunc))
+	menuItem.instance.SetTooltip(removeNonASCII(val))
 
 	clipboardInstance.valExistsMap[val] = true
 	clipboardInstance.menuItemToVal[menuItem.instance] = val
@@ -100,6 +103,12 @@ func truncateVal(clipboardInstance *clipboard, val string) string {
 		valTrunc = val[:clipboardInstance.truncateLength] + "... (" + strconv.Itoa(len(val)) + " chars)"
 	}
 	return valTrunc
+}
+
+func removeNonASCII(val string) string {
+	removeNonASCII := regexp.MustCompile("[[:^ascii:]]")
+	nonASCIIStr := removeNonASCII.ReplaceAllLiteralString(val, "")
+	return strings.TrimSpace(nonASCIIStr)
 }
 
 func getTitle(menuItem menuItem) string {
